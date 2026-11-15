@@ -37,6 +37,8 @@ All 3D models integrated into `@umituz/web-virtual` comply with strict open-sour
 | **Characters** | `character-female-a.glb` | Skinned glTF | 273.4 KB | CC0 1.0 | Kenney | https://kenney.nl/assets/mini-characters |
 | **Characters** | `character-female-b.glb` | Skinned glTF | 252.1 KB | CC0 1.0 | Kenney | https://kenney.nl/assets/mini-characters |
 
+> **Character texture note:** the Mini Characters kit ships its models with a shared external `Textures/colormap.png` atlas. That atlas (CC0, same kit) is now **embedded inside each character GLB**, making them fully self-contained — no sidecar files to lose between the package and consumer apps.
+
 ---
 
 ## 2. Integration Policy
