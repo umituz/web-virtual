@@ -7,6 +7,7 @@ import {
   forwardRef,
   useImperativeHandle,
 } from 'react'
+import { MonitorOff, RotateCw } from 'lucide-react'
 import * as THREE from 'three'
 import type {
   WorldDefinition,
@@ -15,7 +16,7 @@ import type {
   PinDisplayMode,
 } from '../core/types'
 import { WorldEngine } from '../engine/renderer'
-import { createStylizedAvatar } from '../entities/people/AvatarBuilder'
+import { createStylizedAvatar, type CreatedAvatar } from '../entities/people/AvatarBuilder'
 import { EntityPins } from './EntityPins'
 import { WorldControls } from './WorldControls'
 import { EntityInspector } from './EntityInspector'
@@ -77,13 +78,33 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
     const engineRef = useRef<WorldEngine | null>(null)
     const pinElementsRef = useRef<Map<string, HTMLElement>>(new Map())
 
+    // Hot-sync registry: avatars are created once per entity and updated in place.
+    const avatarRegistryRef = useRef<Map<string, CreatedAvatar>>(new Map())
+    const avatarGroupRef = useRef<THREE.Group | null>(null)
+    const staticInteractivesRef = useRef<THREE.Object3D[]>([])
+
+    // Latest props/refs readable by stable engine callbacks (prevents engine re-init churn)
+    const worldRef = useRef(world)
+    const nightModeRef = useRef(false)
+    const callbacksRef = useRef({
+      onSelectEntity: (_entity: WorldEntity | null) => {},
+      onHoverEntity: (_entity: WorldEntity | null) => {},
+    })
+
     const [internalNightMode, setInternalNightMode] = useState(false)
     const [internalPinMode, setInternalPinMode] = useState<PinDisplayMode>(defaultPinMode)
     const [fps, setFps] = useState<number>(60)
     const [internalSelectedEntity, setInternalSelectedEntity] = useState<WorldEntity | null>(null)
 
+    // WebGL resilience state
+    const [webglFailed, setWebglFailed] = useState(false)
+    const [contextLost, setContextLost] = useState(false)
+    const [engineEpoch, setEngineEpoch] = useState(0)
+
     const nightMode = externalNightMode !== undefined ? externalNightMode : internalNightMode
     const pinMode = externalPinMode !== undefined ? externalPinMode : internalPinMode
+    nightModeRef.current = nightMode
+    worldRef.current = world
 
     // Determine active selected entity (controlled or uncontrolled)
     const activeEntity =
@@ -101,6 +122,14 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       [onSelectEntity],
     )
 
+    // Keep stable engine callbacks pointing at the latest handler identities
+    useEffect(() => {
+      callbacksRef.current = {
+        onSelectEntity: handleSelectEntity,
+        onHoverEntity: onHoverEntity || (() => {}),
+      }
+    })
+
     const handleRegisterPinElement = useCallback((entityId: string, el: HTMLElement | null) => {
       if (el) {
         pinElementsRef.current.set(entityId, el)
@@ -109,59 +138,63 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       }
     }, [])
 
-    // Initialize Three.js Engine
+    // ============================================================
+    // ENGINE LIFECYCLE — created once per preset (NOT per world data
+    // change). Scene, lighting, camera and GLB models survive
+    // entity/polling updates; only avatars are diffed below.
+    // ============================================================
     useEffect(() => {
       const canvas = canvasRef.current
       const container = containerRef.current
       if (!canvas || !container) return
 
-      const engine = new WorldEngine({
-        canvas,
-        world,
-        pinElements: pinElementsRef.current,
-        onSelectEntity: (evt) => {
-          handleSelectEntity(evt.entity)
-        },
-        onHoverEntity: (entity) => {
-          if (onHoverEntity) onHoverEntity(entity)
-        },
-        onFpsUpdate: (currentFps) => {
-          setFps(currentFps)
-        },
-      })
+      let engine: WorldEngine
+      try {
+        engine = new WorldEngine({
+          canvas,
+          world: worldRef.current,
+          pinElements: pinElementsRef.current,
+          onSelectEntity: (evt) => callbacksRef.current.onSelectEntity(evt.entity),
+          onHoverEntity: (entity) => callbacksRef.current.onHoverEntity(entity),
+          onFpsUpdate: (currentFps) => {
+            setFps(currentFps)
+          },
+          onContextLost: () => setContextLost(true),
+        })
+      } catch (err) {
+        console.error('[web-virtual] WebGL is unavailable, rendering fallback UI:', err)
+        setWebglFailed(true)
+        return
+      }
+
       engineRef.current = engine
+      setWebglFailed(false)
+      setContextLost(false)
 
       // 1. Build environment from preset or custom scene builder
       const activePreset = preset
       if (activePreset && activePreset.buildScene) {
         activePreset.buildScene(engine.scene, {
-          nightMode,
-          theme: world.theme,
+          nightMode: nightModeRef.current,
+          theme: worldRef.current.theme,
         })
       }
 
-      // 2. Build 3D Avatars for people/actor entities
+      // 2. Avatar container — populated by the entity sync effect below
       const avatarGroup = new THREE.Group()
       avatarGroup.name = 'world-avatars'
-
-      for (const entity of world.entities) {
-        if (entity.type === 'person' || entity.type === 'actor') {
-          const { group, animate } = createStylizedAvatar(entity, engine.materials)
-          avatarGroup.add(group)
-          engine.animators.push(animate)
-          engine.interactiveObjects.push(group)
-        }
-      }
       engine.scene.add(avatarGroup)
+      avatarGroupRef.current = avatarGroup
 
-      // 3. Register all interactive objects with entityId (workstations, chairs, monitors, avatars)
+      // 3. Collect static interactive objects (workstations, chairs, monitors)
+      const staticInteractives: THREE.Object3D[] = []
       engine.scene.traverse((obj) => {
         if (obj.userData && obj.userData.entityId) {
-          if (!engine.interactiveObjects.includes(obj)) {
-            engine.interactiveObjects.push(obj)
-          }
+          staticInteractives.push(obj)
         }
       })
+      staticInteractivesRef.current = staticInteractives
+      engine.interactiveObjects = [...staticInteractives]
 
       // Resize Observer
       const resizeObserver = new ResizeObserver((entries) => {
@@ -176,11 +209,61 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
 
       return () => {
         resizeObserver.disconnect()
+        avatarRegistryRef.current.clear()
+        avatarGroupRef.current = null
+        staticInteractivesRef.current = []
         engine.dispose()
         engineRef.current = null
-        pinElementsRef.current.clear()
       }
-    }, [world, preset, handleSelectEntity, onHoverEntity])
+    }, [preset, engineEpoch])
+
+    // ============================================================
+    // ENTITY HOT-SYNC — diff world.entities against the avatar
+    // registry: add new avatars, update changed ones in place
+    // (status halo, animation flags, transform), remove stale ones.
+    // No scene rebuild, no GLB reload, no camera reset.
+    // ============================================================
+    useEffect(() => {
+      const engine = engineRef.current
+      const avatarGroup = avatarGroupRef.current
+      if (!engine || !avatarGroup) return
+
+      // Always point the engine (raycaster/projector/focus) at the latest data
+      engine.updateWorld(world)
+
+      const registry = avatarRegistryRef.current
+      const seen = new Set<string>()
+
+      for (const entity of world.entities) {
+        if (entity.type !== 'person' && entity.type !== 'actor') continue
+        seen.add(entity.id)
+
+        const existing = registry.get(entity.id)
+        if (existing) {
+          existing.update(entity)
+          continue
+        }
+
+        const created = createStylizedAvatar(entity, engine.materials)
+        registry.set(entity.id, created)
+        avatarGroup.add(created.group)
+      }
+
+      // Remove avatars for entities that no longer exist
+      for (const [id, created] of registry) {
+        if (!seen.has(id)) {
+          created.group.removeFromParent()
+          registry.delete(id)
+        }
+      }
+
+      // Rebuild animator + interactive lists from the registry
+      engine.animators = Array.from(registry.values()).map((a) => a.animate)
+      engine.interactiveObjects = [
+        ...staticInteractivesRef.current,
+        ...Array.from(registry.values()).map((a) => a.group),
+      ]
+    }, [world, preset, engineEpoch])
 
     // Sync Night Mode with engine
     useEffect(() => {
@@ -252,15 +335,67 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       [],
     )
 
+    const handleRestoreContext = useCallback(() => {
+      // Rebuild the engine from scratch (fresh WebGL context, fresh scene)
+      setContextLost(false)
+      setEngineEpoch((epoch) => epoch + 1)
+    }, [])
+
+    // Graceful fallback when WebGL is not available at all
+    if (webglFailed) {
+      return (
+        <div
+          ref={containerRef}
+          className={`wv-container wv-webgl-fallback ${className}`}
+          style={style}
+          role="region"
+          aria-label={`${world.name} 3D environment`}
+        >
+          <div className="wv-fallback-card">
+            <MonitorOff size={28} />
+            <h3>3D view unavailable</h3>
+            <p>
+              Your browser or device does not support WebGL, which is required for the 3D
+              environment. Entity data remains available below.
+            </p>
+            <ul className="wv-fallback-entity-list">
+              {world.entities.slice(0, 12).map((entity) => (
+                <li key={entity.id}>
+                  <span className={`wv-status-pip ${entity.status || 'idle'}`} />
+                  {entity.pinNumber ? `#${entity.pinNumber} ` : ''}
+                  {entity.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {children}
+        </div>
+      )
+    }
+
     return (
       <div
         ref={containerRef}
         className={`wv-container ${nightMode ? 'is-night' : ''} ${className}`}
         style={style}
         role="region"
-        aria-label={`${world.name} 3D Sanal Ortamı`}
+        aria-label={`${world.name} 3D environment`}
       >
         <canvas ref={canvasRef} className="wv-canvas" />
+
+        {/* WebGL context lost overlay (e.g. GPU driver reset) */}
+        {contextLost && (
+          <div className="wv-context-lost-overlay">
+            <div className="wv-fallback-card">
+              <RotateCw size={26} />
+              <h3>3D view interrupted</h3>
+              <p>The graphics context was lost (usually a GPU or tab reset). Restore it below.</p>
+              <button type="button" className="wv-fallback-btn" onClick={handleRestoreContext}>
+                Restore 3D view
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Floating 60fps GPU Projected Pins */}
         <EntityPins

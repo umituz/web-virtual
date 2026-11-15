@@ -6,6 +6,8 @@ import { ModelLoader } from '../../engine/modelLoader'
 export interface CreatedAvatar {
   group: THREE.Group
   animate: (delta: number, elapsed: number) => void
+  /** Hot-sync entity data (status / position / rotation) without rebuilding the avatar. */
+  update: (entity: WorldEntity) => void
 }
 
 export function createStylizedAvatar(
@@ -158,8 +160,10 @@ export function createStylizedAvatar(
 
   // 6. Realistic Procedural Animation Function
   const baseTorsoY = 0.6
-  const isWorking = entity.status === 'running' || entity.status === 'working'
-  const isAwaiting = entity.status === 'awaiting_approval'
+  // Mutable status flags so hot-synced updates can change animation behaviour live
+  let isWorking = entity.status === 'running' || entity.status === 'working'
+  let isAwaiting = entity.status === 'awaiting_approval'
+  let currentStatus = entity.status || 'idle'
   const breathFreq = 1.3 + (seed % 0.4)
   const glanceFreq = 0.22 + ((seed * 3) % 0.15)
 
@@ -227,5 +231,21 @@ export function createStylizedAvatar(
     group.rotation.set(entity.rotation[0], entity.rotation[1], entity.rotation[2])
   }
 
-  return { group, animate }
+  // 7. Hot-sync: apply live entity data changes without rebuilding the avatar
+  const update = (next: WorldEntity) => {
+    const nextStatus = next.status || 'idle'
+    if (nextStatus !== currentStatus) {
+      currentStatus = nextStatus
+      isWorking = nextStatus === 'running' || nextStatus === 'working'
+      isAwaiting = nextStatus === 'awaiting_approval'
+      statusHalo.material = materials.getStatusGlow(nextStatus)
+    }
+
+    group.position.set(next.position[0], next.position[1], next.position[2])
+    if (next.rotation) {
+      group.rotation.set(next.rotation[0], next.rotation[1], next.rotation[2])
+    }
+  }
+
+  return { group, animate, update }
 }

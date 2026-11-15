@@ -37,12 +37,12 @@ export function WorldControls({
   fps,
 }: WorldControlsProps): ReactNode {
   return (
-    <div className="wv-controls-toolbar" role="toolbar" aria-label="3D Görünüm Kontrolleri">
+    <div className="wv-controls-toolbar" role="toolbar" aria-label="3D view controls">
       {/* Camera Presets */}
       <button
         type="button"
         className="wv-btn wv-btn-icon"
-        title="İzometrik Görünüm"
+        title="Isometric view"
         onClick={() => onSelectCameraPreset('isometric')}
       >
         <Compass size={16} />
@@ -51,16 +51,16 @@ export function WorldControls({
       <button
         type="button"
         className="wv-btn"
-        title="Üstten Bakış"
+        title="Top-down view"
         onClick={() => onSelectCameraPreset('top')}
       >
-        Üst
+        Top
       </button>
 
       <button
         type="button"
         className="wv-btn wv-btn-icon"
-        title="Kamerayı Sıfırla"
+        title="Reset camera"
         onClick={onResetCamera}
       >
         <RotateCcw size={15} />
@@ -72,27 +72,27 @@ export function WorldControls({
       <button
         type="button"
         className={`wv-btn ${pinMode === 'pins' ? 'is-active' : ''}`}
-        title="Minimal İğneler (Sayılar)"
+        title="Minimal pins (numbers)"
         onClick={() => onChangePinMode('pins')}
       >
         <MapPin size={14} style={{ marginRight: 4 }} />
-        İğneler
+        Pins
       </button>
 
       <button
         type="button"
         className={`wv-btn ${pinMode === 'labels' ? 'is-active' : ''}`}
-        title="Detaylı Kartlar"
+        title="Detailed label cards"
         onClick={() => onChangePinMode('labels')}
       >
         <Tag size={14} style={{ marginRight: 4 }} />
-        Etiketler
+        Labels
       </button>
 
       <button
         type="button"
         className={`wv-btn wv-btn-icon ${pinMode === 'off' ? 'is-active' : ''}`}
-        title="Etiketleri Gizle"
+        title="Hide labels"
         onClick={() => onChangePinMode('off')}
       >
         <EyeOff size={15} />
@@ -104,7 +104,7 @@ export function WorldControls({
       <button
         type="button"
         className="wv-btn wv-btn-icon"
-        title={nightMode ? 'Gündüz Moduna Geç' : 'Gece Moduna Geç'}
+        title={nightMode ? 'Switch to day mode' : 'Switch to night mode'}
         onClick={onToggleNightMode}
       >
         {nightMode ? <Sun size={16} color="#f59e0b" /> : <Moon size={16} />}
@@ -115,7 +115,7 @@ export function WorldControls({
         <button
           type="button"
           className="wv-btn wv-btn-icon"
-          title={isFullscreen ? 'Tam Ekrandan Çık' : 'Tam Ekran'}
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           onClick={onToggleFullscreen}
         >
           {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}

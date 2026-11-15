@@ -64,14 +64,14 @@ export function VirtualEntityDrawer({
           type="button"
           onClick={onClose}
           className="wv-drawer-close-btn"
-          title="Kapat (Esc)"
+          title="Close (Esc)"
         >
           <X size={16} />
         </button>
 
         <div className="wv-drawer-meta-tags">
           {entity.pinNumber && (
-            <span className="wv-drawer-pin-tag">Masa #{entity.pinNumber}</span>
+            <span className="wv-drawer-pin-tag">Desk #{entity.pinNumber}</span>
           )}
           {entity.department && (
             <span className="wv-drawer-dept-tag">{entity.department}</span>
@@ -86,13 +86,13 @@ export function VirtualEntityDrawer({
       <div className="wv-drawer-body">
         {/* Status Row */}
         <div className="wv-drawer-status-card">
-          <span className="wv-drawer-status-label">Çalışma Durumu</span>
+          <span className="wv-drawer-status-label">Work status</span>
           <span className={`wv-drawer-status-chip ${isRunning ? 'is-running' : isAwaiting ? 'is-awaiting' : 'is-idle'}`}>
             {isRunning
-              ? '⚡ Görev Yürütüyor'
+              ? '⚡ Working on a mission'
               : isAwaiting
-                ? '⏳ Onay Bekliyor'
-                : '✓ Boşta / Göreve Hazır'}
+                ? '⏳ Awaiting approval'
+                : '✓ Idle / ready for a mission'}
           </span>
         </div>
 
@@ -101,19 +101,19 @@ export function VirtualEntityDrawer({
           <div className="wv-drawer-metrics-grid">
             <div className="wv-drawer-metric-cell">
               <div className="wv-metric-val">{metrics.totalRuns}</div>
-              <div className="wv-metric-lbl">Toplam Görev</div>
+              <div className="wv-metric-lbl">Total missions</div>
             </div>
             <div className="wv-drawer-metric-cell">
               <div className="wv-metric-val is-success">
                 {metrics.successRate !== undefined ? `${Math.round(metrics.successRate)}%` : '100%'}
               </div>
-              <div className="wv-metric-lbl">Başarı Oranı</div>
+              <div className="wv-metric-lbl">Success rate</div>
             </div>
             <div className="wv-drawer-metric-cell">
               <div className="wv-metric-val">
                 ${metrics.costUsd !== undefined ? metrics.costUsd.toFixed(3) : '0.000'}
               </div>
-              <div className="wv-metric-lbl">Son 24s Maliyet</div>
+              <div className="wv-metric-lbl">Cost (last 24h)</div>
             </div>
           </div>
         )}
@@ -122,7 +122,7 @@ export function VirtualEntityDrawer({
         {latestTask ? (
           <div className="wv-drawer-task-section">
             <div className="wv-task-header">
-              <span className="wv-task-title">Son / Aktif Görev</span>
+              <span className="wv-task-title">Latest / active mission</span>
               {latestTask.createdAt && (
                 <span className="wv-task-time">
                   {new Date(latestTask.createdAt).toLocaleTimeString([], {
@@ -137,7 +137,7 @@ export function VirtualEntityDrawer({
               <p className="wv-task-prompt">{latestTask.prompt}</p>
               {latestTask.summary && (
                 <div className="wv-task-summary">
-                  <strong>Özet: </strong>
+                  <strong>Summary: </strong>
                   {latestTask.summary}
                 </div>
               )}
@@ -148,7 +148,7 @@ export function VirtualEntityDrawer({
                   className="wv-view-report-btn"
                 >
                   <FileText size={13} style={{ marginRight: 6 }} />
-                  <span>Çıktı Raporunu İncele</span>
+                  <span>View output report</span>
                 </button>
               )}
             </div>
@@ -156,14 +156,14 @@ export function VirtualEntityDrawer({
         ) : (
           <div className="wv-drawer-empty-task">
             <Clock size={20} className="wv-empty-icon" />
-            <p>Henüz bu masada bir görev yürütülmedi.</p>
+            <p>No mission has been run at this desk yet.</p>
           </div>
         )}
 
         {/* Direct Dispatch to this Entity */}
         {onDispatch && onChangeDispatchPrompt && (
           <div className="wv-drawer-dispatch-section">
-            <span className="wv-dispatch-title">Doğrudan Bu Masaya Görev Ver</span>
+            <span className="wv-dispatch-title">Assign a mission to this desk</span>
             <div className="wv-dispatch-row">
               <input
                 type="text"
@@ -175,7 +175,7 @@ export function VirtualEntityDrawer({
                     onDispatch()
                   }
                 }}
-                placeholder="Örn: Yeni kampanya metinlerini hazırla..."
+                placeholder="e.g. Draft the new campaign copy..."
                 className="wv-dispatch-input"
               />
               <button

@@ -1853,3 +1853,132 @@
 .wv-hq-container.is-night .wv-task-prompt {
   color: #f8fafc;
 }
+
+/* ============================================
+   WebGL FALLBACK & CONTEXT-LOST RECOVERY
+   ============================================ */
+
+.wv-webgl-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #334155;
+}
+
+.wv-container.is-night.wv-webgl-fallback,
+.wv-hq-container.is-night .wv-webgl-fallback {
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
+  color: #e2e8f0;
+}
+
+.wv-fallback-card {
+  max-width: 420px;
+  width: calc(100% - 48px);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  padding: 28px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.wv-fallback-card > svg {
+  color: #3b82f6;
+  opacity: 0.85;
+}
+
+.wv-fallback-card h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.wv-fallback-card p {
+  margin: 0;
+  color: #64748b;
+}
+
+.wv-container.is-night .wv-fallback-card,
+.wv-hq-container.is-night .wv-fallback-card {
+  background: rgba(15, 23, 42, 0.86);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.wv-container.is-night .wv-fallback-card h3,
+.wv-hq-container.is-night .wv-fallback-card h3 {
+  color: #f8fafc;
+}
+
+.wv-container.is-night .wv-fallback-card p,
+.wv-hq-container.is-night .wv-fallback-card p {
+  color: #94a3b8;
+}
+
+.wv-fallback-entity-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.wv-fallback-entity-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.14);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.wv-fallback-btn {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 9px;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wv-fallback-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+}
+
+.wv-context-lost-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(248, 250, 252, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wv-container.is-night .wv-context-lost-overlay {
+  background: rgba(15, 23, 42, 0.82);
+}

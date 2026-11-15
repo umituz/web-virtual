@@ -39,7 +39,7 @@ export function VirtualCommandBar({
   defaultOpen = false,
   isOpen: externalIsOpen,
   onToggleOpen,
-  placeholder = "Genel Müdür'e veya bir uzmana görev verin... (Enter ile gönder)",
+  placeholder = "Assign a mission to the general manager or a specialist... (Enter to send)",
   className = '',
 }: VirtualCommandBarProps): ReactNode {
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen)
@@ -56,10 +56,10 @@ export function VirtualCommandBar({
         type="button"
         onClick={() => handleToggle(true)}
         className="wv-command-collapsed-btn"
-        aria-label="Komut Barını Aç"
+        aria-label="Open mission panel"
       >
         <Send size={14} color="#3b82f6" />
-        <span>⚡ Görev Paneli ▲</span>
+        <span>⚡ Mission Panel ▲</span>
       </button>
     )
   }
@@ -86,9 +86,9 @@ export function VirtualCommandBar({
             type="button"
             onClick={() => handleToggle(false)}
             className="wv-collapse-btn"
-            title="Komut Barını Küçült"
+            title="Collapse mission panel"
           >
-            Gizle ▼
+            Hide ▼
           </button>
         </div>
       )}
@@ -102,9 +102,9 @@ export function VirtualCommandBar({
             onChange={(e) => onChangeTarget(e.target.value)}
             className="wv-target-select"
           >
-            <option value="auto">👑 Genel Müdür (Otomatik Delege)</option>
+            <option value="auto">👑 General Manager (auto-delegate)</option>
             {entities.length > 0 && (
-              <optgroup label="Ofis Masaları / Çalışanlar">
+              <optgroup label="Office desks / staff">
                 {entities.map((en) => (
                   <option key={en.id} value={en.id}>
                     {en.pinNumber ? `#${en.pinNumber} ` : ''}
@@ -138,10 +138,10 @@ export function VirtualCommandBar({
             type="button"
             onClick={onToggleDemoMode}
             className={`wv-demo-toggle-btn ${isDemoMode ? 'is-demo' : 'is-ai'}`}
-            title="Çalışma Modu"
+            title="Execution mode"
           >
             {isDemoMode ? <Sparkles size={14} /> : <Bot size={14} />}
-            <span className="wv-demo-label">{isDemoMode ? 'Demo Hızlı' : 'Gerçek AI'}</span>
+            <span className="wv-demo-label">{isDemoMode ? 'Fast demo' : 'Real AI'}</span>
           </button>
         )}
 
@@ -157,7 +157,7 @@ export function VirtualCommandBar({
           ) : (
             <>
               <Send size={14} style={{ marginRight: 6 }} />
-              <span>Ateşle</span>
+              <span>Launch</span>
             </>
           )}
         </button>

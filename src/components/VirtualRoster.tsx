@@ -37,7 +37,7 @@ export function VirtualRoster({
   onSearchChange,
   selectedCategory,
   onSelectCategory,
-  title = 'Ofis Kadrosu',
+  title = 'Office roster',
   className = '',
 }: VirtualRosterProps): ReactNode {
   // Filter entities based on search and category
@@ -85,14 +85,16 @@ export function VirtualRoster({
             </div>
             <div>
               <h3 className="wv-roster-heading">{title}</h3>
-              <p className="wv-roster-subheading">{entities.length} çalışan ofis masalarında</p>
+              <p className="wv-roster-subheading">
+                {entities.length} {entities.length === 1 ? 'member' : 'members'} at their desks
+              </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="wv-roster-close-btn"
-            title="Kadro Panelini Gizle"
+            title="Hide roster panel"
           >
             <X size={16} />
           </button>
@@ -105,7 +107,7 @@ export function VirtualRoster({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Çalışan veya rol ara..."
+            placeholder="Search by name or role..."
             className="wv-roster-search-input"
           />
         </div>
@@ -118,7 +120,7 @@ export function VirtualRoster({
               onClick={() => onSelectCategory('all')}
               className={`wv-roster-pill ${selectedCategory === 'all' ? 'is-active' : ''}`}
             >
-              Tümü
+              All
             </button>
             {departments.map((dept) => (
               <button
@@ -169,7 +171,7 @@ export function VirtualRoster({
                     {en.pinNumber && <span className="wv-roster-pin">#{en.pinNumber}</span>}
                     <h4 className="wv-roster-name">{en.name}</h4>
                   </div>
-                  <p className="wv-roster-role">{en.role || en.description || 'Çalışan'}</p>
+                  <p className="wv-roster-role">{en.role || en.description || 'Staff member'}</p>
                 </div>
               </div>
 

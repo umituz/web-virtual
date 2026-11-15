@@ -13,6 +13,7 @@ export interface WorldEngineOptions {
   onSelectEntity?: (event: EntitySelectedEvent) => void
   onHoverEntity?: (entity: WorldEntity | null) => void
   onFpsUpdate?: (fps: number) => void
+  onContextLost?: () => void
 }
 
 export class WorldEngine {
@@ -30,6 +31,7 @@ export class WorldEngine {
 
   private isDisposed = false
   private animationFrameId: number | null = null
+  private visibilityHandler: (() => void) | null = null
   private clock = new THREE.Clock()
   private hoveredEntityId: string | null = null
 
@@ -64,7 +66,39 @@ export class WorldEngine {
     this.projector = new DirectDOMProjector()
 
     this.initEventListeners(canvas)
+    this.initContextLossHandling(canvas)
     this.startLoop()
+  }
+
+  /**
+   * Hot-sync the world data (entities, theme, zones) without rebuilding the scene.
+   * Raycast lookups, label projection and camera focus immediately use the new data.
+   */
+  public updateWorld(world: WorldDefinition): void {
+    this.options.world = world
+  }
+
+  /** Pause rendering while the tab is hidden to save battery/CPU. */
+  private initContextLossHandling(canvas: HTMLCanvasElement): void {
+    canvas.addEventListener(
+      'webglcontextlost',
+      (e) => {
+        e.preventDefault()
+        this.stopLoop()
+        if (this.options.onContextLost) this.options.onContextLost()
+      },
+      false,
+    )
+  }
+
+  /** Resume the render loop after a pause (tab visible again or context restored). */
+  public resumeLoop(): void {
+    if (this.isDisposed) return
+    if (this.animationFrameId === null) {
+      // Flush the accumulated delta so animations do not jump after the pause
+      this.clock.getDelta()
+      this.startLoop()
+    }
   }
 
   private initEventListeners(canvas: HTMLCanvasElement): void {
@@ -171,6 +205,19 @@ export class WorldEngine {
   }
 
   private startLoop(): void {
+    // Pause the render loop while the document is hidden (saves battery/CPU)
+    if (this.visibilityHandler === null) {
+      this.visibilityHandler = () => {
+        if (this.isDisposed) return
+        if (document.hidden) {
+          this.stopLoop()
+        } else {
+          this.resumeLoop()
+        }
+      }
+      document.addEventListener('visibilitychange', this.visibilityHandler)
+    }
+
     const loop = () => {
       if (this.isDisposed) return
 
@@ -212,10 +259,19 @@ export class WorldEngine {
     this.animationFrameId = requestAnimationFrame(loop)
   }
 
-  public dispose(): void {
-    this.isDisposed = true
+  private stopLoop(): void {
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId)
+      this.animationFrameId = null
+    }
+  }
+
+  public dispose(): void {
+    this.isDisposed = true
+    this.stopLoop()
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler)
+      this.visibilityHandler = null
     }
 
     this.unbindEvents()

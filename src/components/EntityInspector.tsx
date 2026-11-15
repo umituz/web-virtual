@@ -91,7 +91,7 @@ export function EntityInspector({
             justifyContent: 'center',
             borderRadius: 6,
           }}
-          title="Kapat (Esc)"
+          title="Close (Esc)"
         >
           <X size={16} />
         </button>
@@ -101,10 +101,10 @@ export function EntityInspector({
       <div style={{ padding: 14, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Role & Department */}
         <div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{entity.role || 'Varlık'}</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{entity.role || 'Entity'}</div>
           {entity.department && (
             <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
-              Departman: {entity.department}
+              Department: {entity.department}
             </div>
           )}
         </div>
@@ -132,10 +132,10 @@ export function EntityInspector({
             }}
           >
             {entity.status === 'running' || entity.status === 'working'
-              ? 'Görev Yürütülüyor'
+              ? 'Working on a mission'
               : entity.status === 'awaiting_approval'
-                ? 'Onay Bekliyor'
-                : 'Hazır / Boşta'}
+                ? 'Awaiting approval'
+                : 'Ready / idle'}
           </span>
         </div>
 
@@ -160,7 +160,7 @@ export function EntityInspector({
               fontSize: 11,
             }}
           >
-            <div style={{ fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>ÖZELLİKLER</div>
+            <div style={{ fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>ATTRIBUTES</div>
             {Object.entries(entity.metadata).map(([k, v]) => (
               <div
                 key={k}
@@ -212,7 +212,7 @@ export function EntityInspector({
             }}
           >
             <Focus size={14} />
-            3D Kamerayı Odakla
+            Focus 3D camera
           </button>
         )}
 

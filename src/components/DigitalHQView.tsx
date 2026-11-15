@@ -73,6 +73,8 @@ export interface DigitalHQViewProps {
   onSelectEntity?: (entity: WorldEntity | null) => void
   getEntityMetrics?: (entityId: string) => EntityRunMetrics | undefined
   getEntityLatestTask?: (entityId: string) => EntityLatestTask | null
+  /** Total number of desks in the office layout (defaults to the world's entity count). */
+  deskCapacity?: number
   returnUrl?: string
   standaloneUrl?: string
   className?: string
@@ -96,6 +98,7 @@ export function DigitalHQView({
   onSelectEntity,
   getEntityMetrics,
   getEntityLatestTask,
+  deskCapacity,
   returnUrl = '/app/office',
   standaloneUrl = '/digital-hq',
   className = '',
@@ -194,6 +197,9 @@ export function DigitalHQView({
     return world.entities.filter((e) => e.status === 'awaiting_approval').length
   }, [world.entities])
 
+  // Total desks in the office layout (defaults to the world's entity count)
+  const capacity = deskCapacity ?? world.entities.length
+
   return (
     <div className={`wv-hq-container ${nightMode ? 'is-night' : ''} ${className}`}>
       {/* 1. Header Toolbar */}
@@ -208,25 +214,25 @@ export function DigitalHQView({
                 <h1 className="wv-hq-brand-title">{world.name}</h1>
                 <span className="wv-hq-badge">Universal 3D</span>
               </div>
-              <p className="wv-hq-brand-desc">Yapay Zeka Destekli Sanal Karargah</p>
+              <p className="wv-hq-brand-desc">AI-powered virtual headquarters</p>
             </div>
           </div>
 
           <div className="wv-hq-stats-row">
             <span className="wv-hq-stat-pill is-green">
               <span className="wv-hq-pip" />
-              {world.entities.length} / 17 Masa Dolu
+              {world.entities.length} / {capacity} desks staffed
             </span>
             {activeWorkersCount > 0 && (
               <span className="wv-hq-stat-pill is-purple">
                 <Zap size={12} />
-                {activeWorkersCount} Görevde
+                {activeWorkersCount} on a mission
               </span>
             )}
             {pendingApprovalsCount > 0 && (
               <span className="wv-hq-stat-pill is-amber">
                 <Clock size={12} />
-                {pendingApprovalsCount} Onay Bekliyor
+                {pendingApprovalsCount} awaiting approval
               </span>
             )}
           </div>
@@ -240,7 +246,7 @@ export function DigitalHQView({
             className={`wv-hq-mode-tab ${activeMode === 'office' ? 'is-active' : ''}`}
           >
             <Compass size={14} color="#3b82f6" />
-            <span>Ofis Katı (3D)</span>
+            <span>Office floor (3D)</span>
           </button>
 
           <button
@@ -249,7 +255,7 @@ export function DigitalHQView({
             className={`wv-hq-mode-tab ${activeMode === 'operations' ? 'is-active' : ''}`}
           >
             <LayoutDashboard size={14} color="#06b6d4" />
-            <span>Operasyonlar</span>
+            <span>Operations</span>
             {projects.length > 0 && (
               <span className="wv-hq-tab-count">{projects.length}</span>
             )}
@@ -261,7 +267,7 @@ export function DigitalHQView({
             className={`wv-hq-mode-tab ${activeMode === 'command_center' ? 'is-active' : ''}`}
           >
             <Terminal size={14} color="#a855f7" />
-            <span>AI Komuta Merkezi</span>
+            <span>AI command center</span>
             {pendingApprovalsCount > 0 && (
               <span className="wv-hq-tab-badge">{pendingApprovalsCount}</span>
             )}
@@ -270,7 +276,7 @@ export function DigitalHQView({
 
         {/* Header Right Actions */}
         <div className="wv-hq-header-right">
-          {onSeedSquad && world.entities.length < 17 && (
+          {onSeedSquad && world.entities.length < capacity && (
             <button
               type="button"
               onClick={onSeedSquad}
@@ -278,7 +284,7 @@ export function DigitalHQView({
               className="wv-hq-action-btn is-seed"
             >
               {isSeeding ? <Loader2 size={13} className="wv-spin" /> : <Sparkles size={13} />}
-              <span>Kadro Ekle (17)</span>
+              <span>Build squad ({capacity})</span>
             </button>
           )}
 
@@ -289,11 +295,11 @@ export function DigitalHQView({
                 type="button"
                 onClick={handleCyclePinMode}
                 className={`wv-hq-action-btn ${pinMode !== 'off' ? 'is-active' : ''}`}
-                title="Etiketleri Değiştir: Kapalı ➔ Numaralar (#) ➔ İsimler"
+                title="Cycle labels: off ➔ numbers (#) ➔ names"
               >
                 <Tag size={14} />
                 <span>
-                  {pinMode === 'off' ? 'Etiketler: Kapalı' : pinMode === 'pins' ? 'Masa No (#)' : 'İsimler'}
+                  {pinMode === 'off' ? 'Labels: off' : pinMode === 'pins' ? 'Desk no. (#)' : 'Names'}
                 </span>
               </button>
 
@@ -302,10 +308,10 @@ export function DigitalHQView({
                 type="button"
                 onClick={() => setShowCommandBar((prev) => !prev)}
                 className={`wv-hq-action-btn ${showCommandBar ? 'is-active' : ''}`}
-                title={showCommandBar ? 'Görev Panelini Kapat' : 'Görev Panelini Aç'}
+                title={showCommandBar ? 'Hide mission panel' : 'Show mission panel'}
               >
                 <Terminal size={14} />
-                <span className="wv-hide-mobile">Görev Paneli</span>
+                <span className="wv-hide-mobile">Mission panel</span>
               </button>
 
               {/* Roster Sidebar Toggle */}
@@ -313,10 +319,10 @@ export function DigitalHQView({
                 type="button"
                 onClick={handleToggleRoster}
                 className={`wv-hq-action-btn ${showRoster ? 'is-active' : ''}`}
-                title={showRoster ? 'Kadro Panelini Gizle' : 'Kadro Panelini Aç'}
+                title={showRoster ? 'Hide roster panel' : 'Show roster panel'}
               >
                 {showRoster ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
-                <span className="wv-hide-mobile">Kadro ({world.entities.length})</span>
+                <span className="wv-hide-mobile">Roster ({world.entities.length})</span>
               </button>
 
               {/* Lighting Toggle */}
@@ -328,7 +334,7 @@ export function DigitalHQView({
                   virtualWorldRef.current?.setNightMode(next)
                 }}
                 className="wv-hq-icon-btn"
-                title={nightMode ? 'Gündüz Moduna Geç (Mimari Beyaz)' : 'Gece Moduna Geç (Akşam Işıkları)'}
+                title={nightMode ? 'Switch to day mode (bright studio)' : 'Switch to night mode (evening lights)'}
               >
                 {nightMode ? <Sun size={15} color="#f59e0b" /> : <Moon size={15} />}
               </button>
@@ -338,7 +344,7 @@ export function DigitalHQView({
                 type="button"
                 onClick={() => virtualWorldRef.current?.resetCamera()}
                 className="wv-hq-icon-btn"
-                title="Kamerayı Varsayılan İzometrik Açıya Sıfırla"
+                title="Reset camera to the default isometric angle"
               >
                 <RotateCcw size={15} />
               </button>
@@ -351,16 +357,16 @@ export function DigitalHQView({
               target="_blank"
               rel="noreferrer"
               className="wv-hq-action-btn"
-              title="Tam Ekran Bağımsız Sayfada Aç"
+              title="Open as a standalone fullscreen page"
             >
               <ExternalLink size={14} />
-              <span className="wv-hide-mobile">Ayrı Sayfada Aç</span>
+              <span className="wv-hide-mobile">Open standalone</span>
             </a>
           ) : (
             <a
               href={returnUrl}
               className="wv-hq-action-btn"
-              title="Dashboard'a Dön"
+              title="Back to dashboard"
             >
               <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />
               <span className="wv-hide-mobile">Dashboard</span>
@@ -371,7 +377,7 @@ export function DigitalHQView({
             type="button"
             onClick={handleToggleFullscreen}
             className="wv-hq-icon-btn"
-            title={isFullscreen ? 'Tam Ekrandan Çık' : 'Tam Ekran'}
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
           </button>
@@ -382,7 +388,7 @@ export function DigitalHQView({
               onClick={onRefresh}
               disabled={refreshing}
               className="wv-hq-icon-btn"
-              title="Verileri Yenile"
+              title="Refresh data"
             >
               <RefreshCw size={15} className={refreshing ? 'wv-spin' : ''} />
             </button>
@@ -401,14 +407,14 @@ export function DigitalHQView({
               {loading && (
                 <div className="wv-hq-loading-overlay">
                   <Loader2 size={32} className="wv-spin" color="#3b82f6" />
-                  <p>3D Dijital Ofis Katı Yükleniyor...</p>
+                  <p>Loading the 3D office floor...</p>
                 </div>
               )}
 
               {/* Navigation Hint */}
               <div className="wv-hq-nav-hint">
                 <Compass size={14} color="#3b82f6" />
-                <span>3D Masaya Tıkla: Bilgiler Açılır • Sol Tık: Çevir • Sağ Tık: Kaydır • Tekerlek: Yakınlaş</span>
+                <span>Click a 3D desk to open its profile • Left drag: orbit • Right drag: pan • Wheel: zoom</span>
               </div>
 
               {/* 3D Viewport */}
@@ -503,38 +509,38 @@ export function DigitalHQView({
             <div className="wv-hq-ops-metrics-grid">
               <div className="wv-hq-ops-metric-card">
                 <div className="wv-ops-metric-header">
-                  <span>Toplam Proje</span>
+                  <span>Total projects</span>
                   <FolderKanban size={16} color="#3b82f6" />
                 </div>
                 <div className="wv-ops-metric-num">{projects.length}</div>
-                <p className="wv-ops-metric-sub">Aktif iş geliştirme portföyü</p>
+                <p className="wv-ops-metric-sub">Active work portfolio</p>
               </div>
 
               <div className="wv-hq-ops-metric-card">
                 <div className="wv-ops-metric-header">
-                  <span>Departman Sayısı</span>
+                  <span>Departments</span>
                   <Building2 size={16} color="#06b6d4" />
                 </div>
                 <div className="wv-ops-metric-num">{departments.length}</div>
-                <p className="wv-ops-metric-sub">Fonksiyonel çalışma hücresi</p>
+                <p className="wv-ops-metric-sub">Functional work cells</p>
               </div>
 
               <div className="wv-hq-ops-metric-card">
                 <div className="wv-ops-metric-header">
-                  <span>Aktif Çalışan</span>
+                  <span>Active staff</span>
                   <Zap size={16} color="#a855f7" />
                 </div>
-                <div className="wv-ops-metric-num">{activeWorkersCount} / 17</div>
-                <p className="wv-ops-metric-sub">Masasında çalışan uzmanlar</p>
+                <div className="wv-ops-metric-num">{activeWorkersCount} / {capacity}</div>
+                <p className="wv-ops-metric-sub">Specialists working at their desks</p>
               </div>
 
               <div className="wv-hq-ops-metric-card">
                 <div className="wv-ops-metric-header">
-                  <span>Onay Bekleyen</span>
+                  <span>Awaiting approval</span>
                   <Clock size={16} color="#f59e0b" />
                 </div>
                 <div className="wv-ops-metric-num">{pendingApprovalsCount}</div>
-                <p className="wv-ops-metric-sub">Yönetici onayı bekleyen görevler</p>
+                <p className="wv-ops-metric-sub">Missions pending a manager approval</p>
               </div>
             </div>
 
@@ -543,7 +549,7 @@ export function DigitalHQView({
               <div className="wv-hq-ops-dept-col">
                 <h2 className="wv-hq-section-heading">
                   <Building2 size={16} color="#3b82f6" />
-                  <span>Departman Odaları & Masaları</span>
+                  <span>Department rooms & desks</span>
                 </h2>
 
                 <div className="wv-hq-dept-cards-grid">
@@ -556,14 +562,14 @@ export function DigitalHQView({
                         <div>
                           <div className="wv-dept-card-top">
                             <span className="wv-dept-color-pip" style={{ backgroundColor: dept.color }} />
-                            {isDeptBusy && <span className="wv-dept-busy-badge">⚡ Çalışıyor</span>}
+                            {isDeptBusy && <span className="wv-dept-busy-badge">⚡ Working</span>}
                           </div>
                           <h3 className="wv-dept-name">{dept.name}</h3>
                           <p className="wv-dept-desc">{dept.description}</p>
                         </div>
 
                         <div className="wv-dept-card-bottom">
-                          <span>{deptEntities.length} Masa</span>
+                          <span>{deptEntities.length} {deptEntities.length === 1 ? 'desk' : 'desks'}</span>
                           <button
                             type="button"
                             onClick={() => {
@@ -572,7 +578,7 @@ export function DigitalHQView({
                             }}
                             className="wv-dept-link-btn"
                           >
-                            <span>Odaya Git</span>
+                            <span>Go to room</span>
                             <ArrowRight size={13} />
                           </button>
                         </div>
@@ -586,14 +592,14 @@ export function DigitalHQView({
               <div className="wv-hq-ops-act-col">
                 <h2 className="wv-hq-section-heading">
                   <Activity size={16} color="#3b82f6" />
-                  <span>Sistem Aktivite Akışı</span>
+                  <span>System activity feed</span>
                 </h2>
 
                 <div className="wv-hq-act-box">
                   {activities.length === 0 ? (
                     <div className="wv-hq-empty-act">
                       <Clock size={24} style={{ opacity: 0.4, margin: '0 auto 8px' }} />
-                      <p>Kayıtlı sistem aktivitesi bulunmuyor.</p>
+                      <p>No recorded system activity yet.</p>
                     </div>
                   ) : (
                     activities.slice(0, 8).map((act) => (
@@ -628,9 +634,9 @@ export function DigitalHQView({
                     <Terminal size={20} />
                   </div>
                   <div>
-                    <h2 className="wv-dispatch-title">Yapay Zeka Komuta ve Orkestrasyon</h2>
+                    <h2 className="wv-dispatch-title">AI command & orchestration</h2>
                     <p className="wv-dispatch-sub">
-                      Genel Müdürlük üzerinden tüm departman çalışanlarına otomatik görev dağıtımı yapın.
+                      Dispatch missions to every department automatically through the general manager.
                     </p>
                   </div>
                 </div>
@@ -640,7 +646,7 @@ export function DigitalHQView({
                     value={promptText}
                     onChange={(e) => setPromptText(e.target.value)}
                     rows={3}
-                    placeholder="Şirket hedefinizi veya karmaşık projenizi yazın... (Örn: Yeni dijital pazarlama kampanyası için strateji, görsel briefler ve bütçe planını oluştur)"
+                    placeholder="Describe a company goal or a complex project... (e.g. Build the strategy, visual briefs and budget plan for our new digital marketing campaign)"
                     className="wv-dispatch-textarea"
                   />
                   <div className="wv-dispatch-actions-row">
@@ -650,7 +656,7 @@ export function DigitalHQView({
                       className={`wv-demo-toggle-btn ${isDemoMode ? 'is-demo' : 'is-ai'}`}
                     >
                       {isDemoMode ? <Sparkles size={14} /> : <Bot size={14} />}
-                      <span>{isDemoMode ? 'Demo Hızlı Simülasyon' : 'Gerçek LLM API'}</span>
+                      <span>{isDemoMode ? 'Fast demo simulation' : 'Real LLM API'}</span>
                     </button>
 
                     <button
@@ -660,7 +666,7 @@ export function DigitalHQView({
                       className="wv-dispatch-submit-big-btn"
                     >
                       {isLaunching ? <Loader2 size={16} className="wv-spin" /> : <Send size={15} />}
-                      <span>Orkestrasyonu Başlat</span>
+                      <span>Start orchestration</span>
                     </button>
                   </div>
                 </div>
@@ -670,13 +676,13 @@ export function DigitalHQView({
               <div className="wv-hq-review-section">
                 <h3 className="wv-hq-section-heading">
                   <Clock size={16} color="#f59e0b" />
-                  <span>Onay ve Denetim Bekleyen Görevler</span>
+                  <span>Missions awaiting review & approval</span>
                 </h3>
 
                 <div className="wv-hq-review-feed">
                   {world.entities.filter((e) => getEntityLatestTask && getEntityLatestTask(e.id)).length === 0 ? (
                     <div className="wv-hq-empty-feed">
-                      Henüz tamamlanan veya onay bekleyen bir görev bulunmuyor.
+                      No completed or approval-pending missions yet.
                     </div>
                   ) : (
                     world.entities
@@ -709,7 +715,7 @@ export function DigitalHQView({
                               className="wv-review-view-btn"
                             >
                               <Eye size={14} />
-                              <span>Raporu Gör</span>
+                              <span>View report</span>
                             </button>
                           </div>
                         )

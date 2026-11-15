@@ -17,7 +17,7 @@ export interface VirtualReportModalProps {
 export function VirtualReportModal({
   report,
   onClose,
-  title = 'Görev ve Rapor Çıktısı',
+  title = 'Mission & output report',
 }: VirtualReportModalProps): ReactNode {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,7 +42,7 @@ export function VirtualReportModal({
             type="button"
             onClick={onClose}
             className="wv-modal-close-btn"
-            title="Kapat"
+            title="Close"
           >
             <X size={16} />
           </button>
@@ -51,14 +51,15 @@ export function VirtualReportModal({
         {/* Modal Body */}
         <div className="wv-modal-body">
           <div className="wv-modal-prompt-box">
-            <span className="wv-modal-section-label">İstek / Görev Briefi:</span>
+            <span className="wv-modal-section-label">Request / mission brief:</span>
             <p className="wv-modal-prompt-text">{report.prompt}</p>
           </div>
 
           <div className="wv-modal-output-section">
-            <span className="wv-modal-section-label">Üretilen Sonuç / Rapor:</span>
+            <span className="wv-modal-section-label">Generated output / report:</span>
             <div className="wv-modal-output-box">
-              {report.summary || 'Görev başarıyla tamamlandı. Çıktılar operasyon havuzuna aktarıldı.'}
+              {report.summary ||
+                'Mission completed successfully. Outputs have been routed to the operations pool.'}
             </div>
           </div>
         </div>
@@ -70,7 +71,7 @@ export function VirtualReportModal({
             onClick={onClose}
             className="wv-modal-btn"
           >
-            Kapat
+            Close
           </button>
         </div>
       </div>
