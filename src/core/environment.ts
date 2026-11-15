@@ -2,7 +2,92 @@ import type {
   WorldDefinition,
   CreateEnvironmentOptions,
   WorldEntity,
+  EntityDraft,
+  WorldSlot,
+  WorldZone,
+  DepartmentInfo,
 } from './types'
+
+/**
+ * Place entities onto preset anchor slots. Entities that already carry an
+ * explicit `position` are kept as-is. Otherwise each entity is matched to a
+ * slot by `slotId` (or its own `id`), falling back to the next free slot in
+ * declaration order. Slot data (position, rotation, zoneId, pinNumber,
+ * avatarColor) fills in any fields the entity left empty, so consumers only
+ * describe WHO sits somewhere — never WHERE.
+ */
+export function placeEntitiesOnSlots(
+  entities: EntityDraft[],
+  slots: WorldSlot[],
+): WorldEntity[] {
+  const placed: WorldEntity[] = []
+
+  if (slots.length === 0) {
+    for (const entity of entities) {
+      if (!entity.position) {
+        console.warn(
+          `[web-virtual] Entity "${entity.id}" has no position and the preset has no slots — it was skipped.`,
+        )
+        continue
+      }
+      placed.push(entity as WorldEntity)
+    }
+    return placed
+  }
+
+  const slotsById = new Map(slots.map((s) => [s.id, s]))
+  const used = new Set<string>()
+
+  for (const entity of entities) {
+    if (entity.position) {
+      placed.push(entity as WorldEntity)
+      continue
+    }
+
+    const slot = (entity.slotId && slotsById.get(entity.slotId)) || slotsById.get(entity.id)
+    const resolved = slot && !used.has(slot.id) ? slot : slots.find((s) => !used.has(s.id))
+
+    if (!resolved) {
+      console.warn(
+        `[web-virtual] No free slot left for entity "${entity.id}" — it was skipped. ` +
+          `Pass an explicit position or add more slots to the preset.`,
+      )
+      continue
+    }
+
+    used.add(resolved.id)
+    placed.push({
+      ...entity,
+      slotId: resolved.id,
+      position: resolved.position,
+      rotation: entity.rotation ?? resolved.rotation,
+      zoneId: entity.zoneId ?? resolved.zoneId,
+      pinNumber: entity.pinNumber ?? resolved.pinNumber,
+      avatarColor: entity.avatarColor ?? resolved.avatarColor,
+    })
+  }
+
+  return placed
+}
+
+/**
+ * Neutral department grouping derived from preset zones — used when the
+ * consumer passes no `departments`. One group per zone, keyed by zone id.
+ */
+export function deriveDepartmentsFromZones(
+  zones: WorldZone[],
+  slots: WorldSlot[] = [],
+): DepartmentInfo[] {
+  return zones.map((zone) => ({
+    id: `zone-${zone.id}`,
+    name: zone.name,
+    slug: zone.id,
+    description: zone.description,
+    color: zone.color,
+    zoneId: zone.id,
+    slotIds: slots.filter((s) => s.zoneId === zone.id).map((s) => s.id),
+  }))
+}
 
 export function createEnvironment(options: CreateEnvironmentOptions): WorldDefinition {
   const preset = options.preset
@@ -66,13 +151,14 @@ export function createEnvironment(options: CreateEnvironmentOptions): WorldDefin
 
   const zones = options.zones || preset?.zones || []
 
-  // If user provided entities, use them; otherwise if preset has defaults, use those
-  let entities: WorldEntity[] = []
-  if (options.entities && options.entities.length > 0) {
-    entities = options.entities
-  } else if (preset?.defaultEntities) {
-    entities = preset.defaultEntities
-  }
+  // Occupants come from the consumer. If none are given, an optional preset
+  // default may supply demo occupants. Either way, entities without an
+  // explicit position are auto-placed onto the preset's architectural slots.
+  const sourceEntities: EntityDraft[] =
+    options.entities && options.entities.length > 0
+      ? options.entities
+      : (preset?.defaultEntities ?? [])
+  const entities = placeEntitiesOnSlots(sourceEntities, preset?.slots ?? [])
 
   const world: WorldDefinition = {
     id,

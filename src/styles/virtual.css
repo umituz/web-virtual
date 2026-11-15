@@ -1982,3 +1982,89 @@
 .wv-container.is-night .wv-context-lost-overlay {
   background: rgba(15, 23, 42, 0.82);
 }
+
+/* ----- Empty floor state (no occupants placed yet) ----- */
+.wv-hq-empty-floor {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.wv-hq-empty-floor-card {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+  padding: 26px 30px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+  text-align: center;
+  color: #334155;
+  backdrop-filter: blur(6px);
+}
+
+.wv-hq-empty-floor-card svg {
+  color: #3b82f6;
+}
+
+.wv-hq-empty-floor-card h3 {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.wv-hq-empty-floor-card p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.wv-hq-empty-floor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wv-hq-empty-floor-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.wv-hq-empty-floor-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.is-night .wv-hq-empty-floor-card {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+}
+
+.is-night .wv-hq-empty-floor-card h3 {
+  color: #f1f5f9;
+}
+
+.is-night .wv-hq-empty-floor-card p {
+  color: #94a3b8;
+}

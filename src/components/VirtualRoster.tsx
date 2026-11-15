@@ -10,8 +10,7 @@ import {
   Globe,
   Shield,
 } from 'lucide-react'
-import type { WorldEntity } from '../core/types'
-import type { DepartmentInfo } from '../presets/officePreset'
+import type { WorldEntity, DepartmentInfo } from '../core/types'
 
 export interface VirtualRosterProps {
   entities: WorldEntity[]
@@ -47,9 +46,9 @@ export function VirtualRoster({
     if (searchQuery && !nameMatch && !roleMatch) return false
 
     if (selectedCategory !== 'all') {
-      const dept = departments.find((d) => d.slug === selectedCategory)
+      const dept = departments.find((d) => (d.slug ?? d.id) === selectedCategory)
       if (dept) {
-        if (!dept.slotIds.includes(en.id)) return false
+        if (!(dept.slotIds ?? []).includes(en.id)) return false
       } else if (en.department !== selectedCategory && en.zoneId !== selectedCategory) {
         return false
       }
@@ -126,7 +125,7 @@ export function VirtualRoster({
               <button
                 key={dept.id}
                 type="button"
-                onClick={() => onSelectCategory(dept.slug)}
+                onClick={() => onSelectCategory(dept.slug ?? dept.id)}
                 className={`wv-roster-pill ${selectedCategory === dept.slug ? 'is-active' : ''}`}
               >
                 {dept.name.split(' ')[0]}

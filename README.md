@@ -6,6 +6,19 @@ Build realistic, high-performance, interactive 3D virtual offices, farms, indust
 
 All UI strings are **English** so the package drops into any product without locale friction. Consumer-supplied data (entity names, missions, roles) is rendered verbatim.
 
+## Architecture vs. data
+
+The package ships **architecture only** — buildings, rooms (zones), lighting, and anchor **slots** (where someone *can* sit). All occupant and org data is **yours**, passed in as props:
+
+| Package provides | Consumer provides |
+|---|---|
+| 3D engine, camera, raycasting, labels/pins | `entities` — who/what occupies the world |
+| Presets: floorplan geometry, furniture, zones | `departments` — org grouping (else derived from zones) |
+| Anchor `slots` (position, zone, pin number) | `zones` override — localized zone labels |
+| Digital HQ chrome (roster, ops, command center) | Missions, projects, activities, metrics |
+
+Entities without an explicit `position` are auto-placed onto preset slots — by `slotId`, by matching `id`, or the next free slot — inheriting position, rotation, zone and pin number from the architecture. You only ever describe **who**, never **where**.
+
 ---
 
 ## Features
@@ -16,13 +29,13 @@ All UI strings are **English** so the package drops into any product without loc
 - **Battery Friendly (1.2.0)**: The render loop pauses automatically while the tab is hidden.
 - **Locked 60 FPS Performance**: Direct GPU CSS `translate3d` projection for floating labels and pins without React state re-rendering overhead during orbit/zoom.
 - **Interactive Entities & Raycasting**: Click and hover directly on 3D desks, monitors, robots, or avatars.
-- **Architectural Presets**:
-  - `officePreset`: 17-desk architectural floorplan with executive suite, meeting room, and glass partitions.
-  - `farmPreset`: Greenhouses, crops, barns, tractors.
-  - `factoryPreset`: Conveyor belts, robotic arms, storage racks.
-  - `schoolPreset`: Lecture halls, interactive smartboards, science labs.
-  - `hospitalPreset`: Triage rooms, consultation suites, patient monitoring.
-- **DigitalHQView**: A complete, embeddable "digital headquarters" screen — 3D office floor, operations dashboard, and an AI command center wired through a single `onDispatchMission` callback.
+- **Architectural Presets** (occupant-free — slots only):
+  - `officePreset`: 17-desk architectural floorplan with executive suite, meeting room, and glass partitions (`OFFICE_SLOTS`).
+  - `farmPreset`: Greenhouses, crops, barns, tractors (`FARM_SLOTS`).
+  - `factoryPreset`: Conveyor belts, robotic arms, storage racks (`FACTORY_SLOTS`).
+  - `schoolPreset`: Lecture halls, interactive smartboards, science labs (`SCHOOL_SLOTS`).
+  - `hospitalPreset`: Triage rooms, consultation suites, patient monitoring (`HOSPITAL_SLOTS`).
+- **DigitalHQView**: A complete, embeddable "digital headquarters" screen — 3D office floor, operations dashboard, and an AI command center wired through a single `onDispatchMission` callback. Departments default to a neutral zone-based grouping when the consumer passes none.
 - **Contextual Inspector & Profile Drawer**: Role, status, metrics, latest task, and custom application actions.
 - **Day & Night Simulation**: One-click smooth lighting transitions.
 - **Pin & Label Modes**: Minimal circular pins (`#1`..`#17`) with status indicators, expandable chips, or hidden mode.
@@ -76,6 +89,24 @@ const world = useMemo(
 return <VirtualWorld world={world} preset={officePreset} />
 ```
 
+### Your occupants, your language (any preset)
+
+Occupants carry no positions — they are auto-placed onto the preset's slots. Pin someone to a specific desk with `slotId`, or let them fill slots in order. Same API for every preset:
+
+```tsx
+import { createEnvironment, farmPreset } from '@umituz/web-virtual'
+
+const world = createEnvironment({
+  preset: farmPreset,
+  name: 'Agromera Çiftlik',
+  zones: TurkishZoneLabels,          // optional: localize room names
+  entities: [
+    { slotId: 'slot-1', type: 'person', name: 'Ahmet', role: 'Sera operatörü', status: 'working' },
+    { slotId: 'slot-2', type: 'vehicle', name: 'Traktör Alpha', status: 'running' },
+  ],
+})
+```
+
 ### Full digital HQ screen
 
 ```tsx
@@ -113,7 +144,7 @@ Ref API (`VirtualWorldRef`): `focusOnEntity`, `setCameraPreset`, `resetCamera`, 
 
 ### `DigitalHQView`
 
-Everything `VirtualWorld` renders plus an operations dashboard and AI command center. Notable props: `projects`, `activities`, `presetMissions`, `deskCapacity` (defaults to the world's entity count), `getEntityMetrics`, `getEntityLatestTask`, `onDispatchMission({ prompt, targetId, isDemo })`, `onSeedSquad`.
+Everything `VirtualWorld` renders plus an operations dashboard and AI command center. Notable props: `departments` (consumer org data; neutral zone-based groups when omitted), `projects`, `activities`, `presetMissions`, `deskCapacity` (defaults to the world's entity count), `getEntityMetrics`, `getEntityLatestTask`, `onDispatchMission({ prompt, targetId, isDemo })`, `onSeedSquad`.
 
 ---
 

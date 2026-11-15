@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { WorldPreset, WorldEntity, WorldZone } from '../core/types'
+import type { WorldPreset, WorldSlot, WorldZone } from '../core/types'
 import { MaterialPalette } from '../engine/materials'
 
 export const DEFAULT_FARM_ZONES: WorldZone[] = [
@@ -26,43 +26,12 @@ export const DEFAULT_FARM_ZONES: WorldZone[] = [
   },
 ]
 
-export const DEFAULT_FARM_ENTITIES: WorldEntity[] = [
-  {
-    id: 'farm-worker-1',
-    type: 'person',
-    name: 'Ahmet — Greenhouse Operator',
-    role: 'Climate control & irrigation',
-    department: 'Greenhouse Operations',
-    zoneId: 'greenhouse',
-    status: 'working',
-    pinNumber: 1,
-    position: [-8, 0, -5],
-    avatarColor: '#15803d',
-  },
-  {
-    id: 'farm-tractor-1',
-    type: 'vehicle',
-    name: 'Autonomous Tractor Alpha',
-    role: 'Plot plowing & crop dusting',
-    department: 'Fleet Management',
-    zoneId: 'crop_fields',
-    status: 'running',
-    pinNumber: 2,
-    position: [6, 0, -4],
-  },
-  {
-    id: 'farm-worker-2',
-    type: 'person',
-    name: 'Mehmet — Harvest Supervisor',
-    role: 'Packaging & storage',
-    department: 'Logistics',
-    zoneId: 'barn_storage',
-    status: 'idle',
-    pinNumber: 3,
-    position: [0, 0, 6],
-    avatarColor: '#b45309',
-  },
+export const FARM_SLOTS: WorldSlot[] = [
+  { id: 'slot-1', label: 'Greenhouse station', position: [-8, 0, -5], zoneId: 'greenhouse', pinNumber: 1, avatarColor: '#15803d' },
+  { id: 'slot-2', label: 'Crop field unit', position: [6, 0, -4], zoneId: 'crop_fields', pinNumber: 2 },
+  { id: 'slot-3', label: 'Barn & logistics station', position: [0, 0, 6], zoneId: 'barn_storage', pinNumber: 3, avatarColor: '#b45309' },
 ]
+
 
 export const farmPreset: WorldPreset = {
   id: 'preset-farm',
@@ -100,7 +69,7 @@ export const farmPreset: WorldPreset = {
     nightBackgroundColor: '#020d04',
   },
   zones: DEFAULT_FARM_ZONES,
-  defaultEntities: DEFAULT_FARM_ENTITIES,
+  slots: FARM_SLOTS,
 
   buildScene: (scene: THREE.Scene, options) => {
     const materials = new MaterialPalette()

@@ -30,6 +30,10 @@ export interface WorldEntity {
   zoneId?: string
   description?: string
   status?: EntityStatus
+  /**
+   * Anchor slot this entity was placed on (mirrors `WorldPreset.slots` ids).
+   */
+  slotId?: string
   position: Vector3Tuple
   rotation?: Vector3Tuple
   scale?: Vector3Tuple
@@ -38,6 +42,34 @@ export interface WorldEntity {
   deskColor?: string
   pinNumber?: number | string
   pinLabel?: string
+  metadata?: Record<string, unknown>
+}
+
+/**
+ * Occupant input accepted by `createEnvironment` — a full `WorldEntity` minus
+ * the required placement fields. If `position` is omitted the entity is
+ * auto-placed onto a preset slot (by `slotId`, by matching `id`, or the next
+ * free slot in order), inheriting the slot's position, rotation, zoneId,
+ * pinNumber and suggested avatarColor.
+ */
+export type EntityDraft = Omit<WorldEntity, 'position'> & { position?: Vector3Tuple }
+
+/**
+ * Architectural anchor point on a preset where a consumer entity can be
+ * placed — a desk, workstation, field station, machine bay, etc. Slots carry
+ * no occupant data: who (or what) sits there always comes from the consumer.
+ */
+export interface WorldSlot {
+  id: string
+  /** Neutral architectural label, e.g. "Executive desk", "Workstation 4". */
+  label: string
+  position: Vector3Tuple
+  rotation?: Vector3Tuple
+  zoneId?: string
+  pinNumber?: number
+  /** Suggested avatar color — consumer entities may override. */
+  avatarColor?: string
+  /** Free-form architecture hints, e.g. `{ desk: 'workstation', dualMonitor: true }`. */
   metadata?: Record<string, unknown>
 }
 
@@ -139,8 +171,24 @@ export interface CreateEnvironmentOptions {
   lighting?: Partial<LightingConfiguration>
   theme?: Partial<WorldTheme>
   zones?: WorldZone[]
-  entities?: WorldEntity[]
+  entities?: EntityDraft[]
   metadata?: Record<string, unknown>
+}
+
+/**
+ * Consumer-supplied grouping shown in the roster filter and the operations
+ * dashboard. Pure org data — the package never ships defaults; when the
+ * consumer passes none, groups are derived neutrally from preset zones.
+ */
+export interface DepartmentInfo {
+  id: string
+  name: string
+  slug?: string
+  description?: string
+  color?: string
+  slotIds?: string[]
+  zoneId?: string
+  iconName?: 'briefcase' | 'palette' | 'megaphone' | 'shield' | 'globe'
 }
 
 export interface WorldPreset {
@@ -157,7 +205,10 @@ export interface WorldPreset {
   lighting: LightingConfiguration
   theme: WorldTheme
   zones: WorldZone[]
-  defaultEntities?: WorldEntity[]
+  /** Architectural anchor points for consumer entities (no occupant data). */
+  slots?: WorldSlot[]
+  /** Optional demo occupants — shipped presets deliberately leave this empty. */
+  defaultEntities?: EntityDraft[]
   buildScene?: (scene: import('three').Scene, options: { nightMode?: boolean; theme?: WorldTheme }) => void
 }
 

@@ -30,14 +30,15 @@ import {
   Moon,
   Sun,
   RotateCcw,
+  Users,
 } from 'lucide-react'
-import type { WorldDefinition, WorldEntity, WorldPreset, PinDisplayMode } from '../core/types'
+import type { WorldDefinition, WorldEntity, WorldPreset, PinDisplayMode, DepartmentInfo } from '../core/types'
+import { deriveDepartmentsFromZones } from '../core/environment'
 import { VirtualWorld, type VirtualWorldRef } from './VirtualWorld'
 import { VirtualCommandBar, type PresetMission } from './VirtualCommandBar'
 import { VirtualRoster } from './VirtualRoster'
 import { VirtualEntityDrawer, type EntityRunMetrics, type EntityLatestTask } from './VirtualEntityDrawer'
 import { VirtualReportModal, type VirtualReportData } from './VirtualReportModal'
-import { DEFAULT_OFFICE_DEPARTMENTS, type DepartmentInfo } from '../presets/officePreset'
 
 export type OperationalMode = 'office' | 'operations' | 'command_center'
 
@@ -83,7 +84,7 @@ export interface DigitalHQViewProps {
 export function DigitalHQView({
   world,
   preset,
-  departments = DEFAULT_OFFICE_DEPARTMENTS,
+  departments: departmentsProp,
   presetMissions = [],
   projects = [],
   activities = [],
@@ -192,6 +193,13 @@ export function DigitalHQView({
   const activeWorkersCount = useMemo(() => {
     return world.entities.filter((e) => e.status === 'running' || e.status === 'working').length
   }, [world.entities])
+
+  // Departments are consumer org data. When none are supplied, derive a
+  // neutral grouping from the preset's architectural zones instead.
+  const departments = useMemo<DepartmentInfo[]>(() => {
+    if (departmentsProp && departmentsProp.length > 0) return departmentsProp
+    return deriveDepartmentsFromZones(world.zones, preset?.slots ?? [])
+  }, [departmentsProp, world.zones, preset])
 
   const pendingApprovalsCount = useMemo(() => {
     return world.entities.filter((e) => e.status === 'awaiting_approval').length
@@ -435,6 +443,31 @@ export function DigitalHQView({
                 showControls={false}
                 showInspector={false}
               >
+                {/* Friendly empty state when no occupants are placed yet */}
+                {world.entities.length === 0 && (
+                  <div className="wv-hq-empty-floor">
+                    <div className="wv-hq-empty-floor-card">
+                      <Users size={28} />
+                      <h3>The floor is ready — nobody is in yet</h3>
+                      <p>
+                        All {capacity} desks are installed and waiting. Bring your team in and they
+                        will take their seats here in 3D.
+                      </p>
+                      {onSeedSquad && (
+                        <button
+                          type="button"
+                          onClick={onSeedSquad}
+                          disabled={isSeeding}
+                          className="wv-hq-empty-floor-btn"
+                        >
+                          {isSeeding ? <Loader2 size={14} className="wv-spin" /> : <Sparkles size={14} />}
+                          <span>Build the squad ({capacity})</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Floating Bottom Command Bar Overlay */}
                 <VirtualCommandBar
                   presetMissions={presetMissions}
@@ -554,7 +587,7 @@ export function DigitalHQView({
 
                 <div className="wv-hq-dept-cards-grid">
                   {departments.map((dept) => {
-                    const deptEntities = world.entities.filter((e) => dept.slotIds.includes(e.id))
+                    const deptEntities = world.entities.filter((e) => (dept.slotIds ?? []).includes(e.id))
                     const isDeptBusy = deptEntities.some((e) => e.status === 'running' || e.status === 'working')
 
                     return (
@@ -573,7 +606,7 @@ export function DigitalHQView({
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedCategory(dept.slug)
+                              setSelectedCategory(dept.slug ?? dept.id)
                               setActiveMode('office')
                             }}
                             className="wv-dept-link-btn"

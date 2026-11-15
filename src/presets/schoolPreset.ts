@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { WorldPreset, WorldEntity, WorldZone } from '../core/types'
+import type { WorldPreset, WorldSlot, WorldZone } from '../core/types'
 import { MaterialPalette } from '../engine/materials'
 
 export const DEFAULT_SCHOOL_ZONES: WorldZone[] = [
@@ -26,32 +26,11 @@ export const DEFAULT_SCHOOL_ZONES: WorldZone[] = [
   },
 ]
 
-export const DEFAULT_SCHOOL_ENTITIES: WorldEntity[] = [
-  {
-    id: 'teacher-1',
-    type: 'person',
-    name: 'Prof. Deniz — Department Head',
-    role: 'Lecturing & mentoring',
-    department: 'Academic',
-    zoneId: 'lecture_hall',
-    status: 'working',
-    pinNumber: 1,
-    position: [-6, 0, -4],
-    avatarColor: '#4338ca',
-  },
-  {
-    id: 'student-1',
-    type: 'person',
-    name: 'Zeynep — Graduate Researcher',
-    role: 'STEM experiment practitioner',
-    department: 'Research',
-    zoneId: 'stem_lab',
-    status: 'idle',
-    pinNumber: 2,
-    position: [6, 0, -3],
-    avatarColor: '#0891b2',
-  },
+export const SCHOOL_SLOTS: WorldSlot[] = [
+  { id: 'slot-1', label: 'Lecture hall station', position: [-6, 0, -4], zoneId: 'lecture_hall', pinNumber: 1, avatarColor: '#4338ca' },
+  { id: 'slot-2', label: 'STEM lab bench', position: [6, 0, -3], zoneId: 'stem_lab', pinNumber: 2, avatarColor: '#0891b2' },
 ]
+
 
 export const schoolPreset: WorldPreset = {
   id: 'preset-school',
@@ -86,7 +65,7 @@ export const schoolPreset: WorldPreset = {
     backgroundColor: '#0f172a',
   },
   zones: DEFAULT_SCHOOL_ZONES,
-  defaultEntities: DEFAULT_SCHOOL_ENTITIES,
+  slots: SCHOOL_SLOTS,
 
   buildScene: (scene: THREE.Scene, options) => {
     const materials = new MaterialPalette()

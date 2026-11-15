@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { WorldPreset, WorldEntity, WorldZone } from '../core/types'
+import type { WorldPreset, WorldSlot, WorldZone } from '../core/types'
 import { MaterialPalette } from '../engine/materials'
 
 export const DEFAULT_HOSPITAL_ZONES: WorldZone[] = [
@@ -26,32 +26,11 @@ export const DEFAULT_HOSPITAL_ZONES: WorldZone[] = [
   },
 ]
 
-export const DEFAULT_HOSPITAL_ENTITIES: WorldEntity[] = [
-  {
-    id: 'doctor-1',
-    type: 'person',
-    name: 'Dr. Selin — Chief Physician',
-    role: 'Clinical director & medical decisions',
-    department: 'Surgery',
-    zoneId: 'consultation',
-    status: 'working',
-    pinNumber: 1,
-    position: [4, 0, -4],
-    avatarColor: '#0284c7',
-  },
-  {
-    id: 'nurse-1',
-    type: 'person',
-    name: 'Nurse Burak — Triage Specialist',
-    role: 'Patient intake & vitals monitoring',
-    department: 'Emergency',
-    zoneId: 'triage_er',
-    status: 'idle',
-    pinNumber: 2,
-    position: [-8, 0, 0],
-    avatarColor: '#059669',
-  },
+export const HOSPITAL_SLOTS: WorldSlot[] = [
+  { id: 'slot-1', label: 'Triage station', position: [-8, 0, 0], zoneId: 'triage_er', pinNumber: 1, avatarColor: '#059669' },
+  { id: 'slot-2', label: 'Consultation room station', position: [4, 0, -4], zoneId: 'consultation', pinNumber: 2, avatarColor: '#0284c7' },
 ]
+
 
 export const hospitalPreset: WorldPreset = {
   id: 'preset-hospital',
@@ -85,7 +64,7 @@ export const hospitalPreset: WorldPreset = {
     backgroundColor: '#042f2e',
   },
   zones: DEFAULT_HOSPITAL_ZONES,
-  defaultEntities: DEFAULT_HOSPITAL_ENTITIES,
+  slots: HOSPITAL_SLOTS,
 
   buildScene: (scene: THREE.Scene, options) => {
     const materials = new MaterialPalette()

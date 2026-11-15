@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { WorldPreset, WorldEntity, WorldZone } from '../core/types'
+import type { WorldPreset, WorldSlot, WorldZone } from '../core/types'
 import { MaterialPalette } from '../engine/materials'
 
 export const DEFAULT_FACTORY_ZONES: WorldZone[] = [
@@ -26,43 +26,12 @@ export const DEFAULT_FACTORY_ZONES: WorldZone[] = [
   },
 ]
 
-export const DEFAULT_FACTORY_ENTITIES: WorldEntity[] = [
-  {
-    id: 'factory-op-1',
-    type: 'person',
-    name: 'Serkan — Line Chief',
-    role: 'Production flow supervisor',
-    department: 'Manufacturing',
-    zoneId: 'assembly_line',
-    status: 'working',
-    pinNumber: 1,
-    position: [-6, 0, 2],
-    avatarColor: '#0369a1',
-  },
-  {
-    id: 'robot-arm-1',
-    type: 'equipment',
-    name: 'Robotic Arm RX-4',
-    role: 'Precision welding & assembly',
-    department: 'Robotics',
-    zoneId: 'assembly_line',
-    status: 'running',
-    pinNumber: 2,
-    position: [-6, 0, -2],
-  },
-  {
-    id: 'factory-inspector',
-    type: 'person',
-    name: 'Ebru — Quality Engineer',
-    role: 'Tolerance verification',
-    department: 'Quality',
-    zoneId: 'quality_control',
-    status: 'idle',
-    pinNumber: 3,
-    position: [6, 0, -4],
-    avatarColor: '#047857',
-  },
+export const FACTORY_SLOTS: WorldSlot[] = [
+  { id: 'slot-1', label: 'Assembly line station', position: [-6, 0, 2], zoneId: 'assembly_line', pinNumber: 1, avatarColor: '#0369a1' },
+  { id: 'slot-2', label: 'Robotic arm bay', position: [-6, 0, -2], zoneId: 'assembly_line', pinNumber: 2 },
+  { id: 'slot-3', label: 'Quality control station', position: [6, 0, -4], zoneId: 'quality_control', pinNumber: 3, avatarColor: '#047857' },
 ]
+
 
 export const factoryPreset: WorldPreset = {
   id: 'preset-factory',
@@ -97,7 +66,7 @@ export const factoryPreset: WorldPreset = {
     nightBackgroundColor: '#020617',
   },
   zones: DEFAULT_FACTORY_ZONES,
-  defaultEntities: DEFAULT_FACTORY_ENTITIES,
+  slots: FACTORY_SLOTS,
 
   buildScene: (scene: THREE.Scene, options) => {
     const materials = new MaterialPalette()

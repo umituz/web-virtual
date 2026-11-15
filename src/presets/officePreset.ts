@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { WorldPreset, WorldEntity, WorldZone } from '../core/types'
+import type { WorldPreset, WorldSlot, WorldZone } from '../core/types'
 import { MaterialPalette } from '../engine/materials'
 import { buildOfficeArchitecture } from '../entities/architecture/OfficeArchitectureBuilder'
 import { createModernWorkstation, createExecutiveDesk, createConferenceTable } from '../entities/furniture/DeskBuilder'
@@ -51,310 +51,39 @@ export const DEFAULT_OFFICE_ZONES: WorldZone[] = [
   },
 ]
 
-export interface DepartmentInfo {
-  id: string
-  name: string
-  slug: string
-  description: string
-  managerSlotId: string
-  managerRole: string
-  color: string
-  slotIds: string[]
-  iconName?: 'briefcase' | 'palette' | 'megaphone' | 'shield' | 'globe'
-}
+type OfficeDeskKind = 'executive' | 'workstation' | 'meeting'
 
-export const DEFAULT_OFFICE_DEPARTMENTS: DepartmentInfo[] = [
-  {
-    id: 'dept-management',
-    name: 'General Management & Strategy',
-    slug: 'management',
-    description: 'Company vision, department coordination, strategic planning and approval audits.',
-    managerSlotId: 'slot-1',
-    managerRole: 'Digital Agency Director (General Manager)',
-    color: '#3b82f6',
-    slotIds: ['slot-1', 'slot-13'],
-    iconName: 'briefcase',
-  },
-  {
-    id: 'dept-creative',
-    name: 'Content & Creative Design',
-    slug: 'creative',
-    description: 'Social media content, visual concepts, ad hooks and viral video production.',
-    managerSlotId: 'slot-3',
-    managerRole: 'Creative Visual Director',
-    color: '#a855f7',
-    slotIds: ['slot-2', 'slot-3', 'slot-4', 'slot-5'],
-    iconName: 'palette',
-  },
-  {
-    id: 'dept-marketing',
-    name: 'Marketing & Growth',
-    slug: 'marketing',
-    description: 'Google & Meta ads, organic SEO, email funnel automation and customer relationships (CRM).',
-    managerSlotId: 'slot-6',
-    managerRole: 'Performance Marketing & Media Buying',
-    color: '#10b981',
-    slotIds: ['slot-6', 'slot-7', 'slot-8', 'slot-9', 'slot-14'],
-    iconName: 'megaphone',
-  },
-  {
-    id: 'dept-tech',
-    name: 'Technology, UI/UX & Data',
-    slug: 'tech',
-    description: 'Conversion-focused web interfaces, landing page wireframes and campaign growth analytics.',
-    managerSlotId: 'slot-11',
-    managerRole: 'UI/UX & Web Interface Designer',
-    color: '#06b6d4',
-    slotIds: ['slot-11', 'slot-12'],
-    iconName: 'globe',
-  },
-  {
-    id: 'dept-operations',
-    name: 'Operations, Quality & Finance',
-    slug: 'operations',
-    description: 'Revenue/expense balance, budget control, quality assurance and the corporate knowledge archive.',
-    managerSlotId: 'slot-10',
-    managerRole: 'Agency Accountant & Finance Specialist',
-    color: '#f59e0b',
-    slotIds: ['slot-10', 'slot-15', 'slot-16', 'slot-17'],
-    iconName: 'shield',
-  },
-]
-
-// 17 standard desk positions matching the reference architectural layout
-export const DEFAULT_OFFICE_ENTITIES: WorldEntity[] = [
-  // 1. General Manager / Executive Suite
+/**
+ * The 17 architectural anchor points of the office floorplan — the single
+ * source of truth for BOTH `buildScene` furniture placement and consumer
+ * entity auto-placement. Slots describe WHERE someone can sit, never WHO.
+ */
+export const OFFICE_SLOTS: WorldSlot[] = [
   {
     id: 'slot-1',
-    type: 'person',
-    name: 'General Manager (CEO)',
-    role: 'Company director & orchestrator',
-    department: 'Management',
-    zoneId: 'executive',
-    status: 'idle',
-    pinNumber: 1,
+    label: 'Executive desk',
     position: [11, 0, -5.5],
-    rotation: [0, 0, 0],
+    zoneId: 'executive',
+    pinNumber: 1,
     avatarColor: '#1e293b',
-    avatarHair: '#0f172a',
+    metadata: { desk: 'executive' as OfficeDeskKind },
   },
-  // Row 1 (Creative & Ads)
-  {
-    id: 'slot-2',
-    type: 'person',
-    name: 'Performance Marketing Specialist',
-    role: 'Ads & campaign optimization',
-    department: 'Marketing',
-    zoneId: 'growth',
-    status: 'idle',
-    pinNumber: 2,
-    position: [-13, 0, -6.8],
-    rotation: [0, 0, 0],
-    avatarColor: '#0284c7',
-  },
-  {
-    id: 'slot-3',
-    type: 'person',
-    name: 'Creative Director',
-    role: 'Visual identity & design',
-    department: 'Creative',
-    zoneId: 'creative',
-    status: 'idle',
-    pinNumber: 3,
-    position: [-9, 0, -6.8],
-    rotation: [0, 0, 0],
-    avatarColor: '#db2777',
-  },
-  {
-    id: 'slot-4',
-    type: 'person',
-    name: 'Ads Manager',
-    role: 'Budget & conversion strategy',
-    department: 'Marketing',
-    zoneId: 'growth',
-    status: 'idle',
-    pinNumber: 4,
-    position: [-5, 0, -6.8],
-    rotation: [0, 0, 0],
-    avatarColor: '#2563eb',
-  },
-  {
-    id: 'slot-5',
-    type: 'person',
-    name: 'Email Marketing Specialist',
-    role: 'CRM & newsletter flows',
-    department: 'Marketing',
-    zoneId: 'growth',
-    status: 'idle',
-    pinNumber: 5,
-    position: [-1, 0, -6.8],
-    rotation: [0, 0, 0],
-    avatarColor: '#7c3aed',
-  },
-
-  // Row 2 (Content, Video, Management)
-  {
-    id: 'slot-6',
-    type: 'person',
-    name: 'Social Media Manager',
-    role: 'Community & content calendar',
-    department: 'Creative',
-    zoneId: 'creative',
-    status: 'idle',
-    pinNumber: 6,
-    position: [-13, 0, -2.0],
-    rotation: [0, 0, 0],
-    avatarColor: '#ea580c',
-  },
-  {
-    id: 'slot-7',
-    type: 'person',
-    name: 'Agency Operations Lead',
-    role: 'Process & workflow tracking',
-    department: 'Operations',
-    zoneId: 'operations',
-    status: 'idle',
-    pinNumber: 7,
-    position: [-9, 0, -2.0],
-    rotation: [0, 0, 0],
-    avatarColor: '#059669',
-  },
-  {
-    id: 'slot-8',
-    type: 'person',
-    name: 'Video & Motion Producer',
-    role: 'Reels, editing & animation',
-    department: 'Creative',
-    zoneId: 'creative',
-    status: 'idle',
-    pinNumber: 8,
-    position: [-5, 0, -2.0],
-    rotation: [0, 0, 0],
-    avatarColor: '#dc2626',
-  },
-  {
-    id: 'slot-9',
-    type: 'person',
-    name: 'Client Services Director',
-    role: 'Team & client coordination',
-    department: 'Management',
-    zoneId: 'executive',
-    status: 'idle',
-    pinNumber: 9,
-    position: [-1, 0, -2.0],
-    rotation: [0, 0, 0],
-    avatarColor: '#4f46e5',
-  },
-
-  // Row 3 (Copywriter, Research, SEO)
-  {
-    id: 'slot-10',
-    type: 'person',
-    name: 'Copywriter',
-    role: 'Landing & ad copy',
-    department: 'Creative',
-    zoneId: 'creative',
-    status: 'idle',
-    pinNumber: 10,
-    position: [-13, 0, 2.8],
-    rotation: [0, 0, 0],
-    avatarColor: '#0891b2',
-  },
-  {
-    id: 'slot-11',
-    type: 'person',
-    name: 'Market Researcher',
-    role: 'Competitor & trend analysis',
-    department: 'Marketing',
-    zoneId: 'growth',
-    status: 'idle',
-    pinNumber: 11,
-    position: [-9, 0, 2.8],
-    rotation: [0, 0, 0],
-    avatarColor: '#16a34a',
-  },
-  {
-    id: 'slot-12',
-    type: 'person',
-    name: 'Brand Strategist',
-    role: 'Positioning & messaging',
-    department: 'Management',
-    zoneId: 'executive',
-    status: 'idle',
-    pinNumber: 12,
-    position: [-5, 0, 2.8],
-    rotation: [0, 0, 0],
-    avatarColor: '#9333ea',
-  },
-  {
-    id: 'slot-13',
-    type: 'person',
-    name: 'SEO & Organic Growth',
-    role: 'Search engine & content distribution',
-    department: 'Marketing',
-    zoneId: 'growth',
-    status: 'idle',
-    pinNumber: 13,
-    position: [-1, 0, 2.8],
-    rotation: [0, 0, 0],
-    avatarColor: '#0284c7',
-  },
-
-  // Front Hub (Art Direction & Design)
-  {
-    id: 'slot-14',
-    type: 'person',
-    name: 'Visual Designer (UI/UX)',
-    role: 'Interface & web design',
-    department: 'Technology',
-    zoneId: 'tech',
-    status: 'idle',
-    pinNumber: 14,
-    position: [-10, 0, 7.5],
-    rotation: [0, 0, 0],
-    avatarColor: '#e11d48',
-  },
-  {
-    id: 'slot-15',
-    type: 'person',
-    name: 'Art Director (AI imagery)',
-    role: 'AI visual artist',
-    department: 'Creative',
-    zoneId: 'creative',
-    status: 'idle',
-    pinNumber: 15,
-    position: [-4, 0, 7.5],
-    rotation: [0, 0, 0],
-    avatarColor: '#475569',
-  },
-
-  // Meeting Room Desks / Client Relations
-  {
-    id: 'slot-16',
-    type: 'person',
-    name: 'Knowledge Librarian & QA',
-    role: 'Process validation & documentation',
-    department: 'Operations',
-    zoneId: 'operations',
-    status: 'idle',
-    pinNumber: 16,
-    position: [7.5, 0, 7.5],
-    rotation: [0, -Math.PI / 4, 0],
-    avatarColor: '#ca8a04',
-  },
-  {
-    id: 'slot-17',
-    type: 'person',
-    name: 'Client Relations Lead',
-    role: 'Onboarding & communication',
-    department: 'Operations',
-    zoneId: 'meeting',
-    status: 'idle',
-    pinNumber: 17,
-    position: [13.5, 0, 7.5],
-    rotation: [0, Math.PI / 4, 0],
-    avatarColor: '#059669',
-  },
+  { id: 'slot-2', label: 'Workstation 2', position: [-13, 0, -6.8], zoneId: 'growth', pinNumber: 2, avatarColor: '#0284c7', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: false } },
+  { id: 'slot-3', label: 'Workstation 3', position: [-9, 0, -6.8], zoneId: 'creative', pinNumber: 3, avatarColor: '#db2777', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: true } },
+  { id: 'slot-4', label: 'Workstation 4', position: [-5, 0, -6.8], zoneId: 'growth', pinNumber: 4, avatarColor: '#2563eb', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: false } },
+  { id: 'slot-5', label: 'Workstation 5', position: [-1, 0, -6.8], zoneId: 'growth', pinNumber: 5, avatarColor: '#7c3aed', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: true } },
+  { id: 'slot-6', label: 'Workstation 6', position: [-13, 0, -2.0], zoneId: 'creative', pinNumber: 6, avatarColor: '#ea580c', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: false } },
+  { id: 'slot-7', label: 'Workstation 7', position: [-9, 0, -2.0], zoneId: 'operations', pinNumber: 7, avatarColor: '#059669', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: true } },
+  { id: 'slot-8', label: 'Workstation 8', position: [-5, 0, -2.0], zoneId: 'creative', pinNumber: 8, avatarColor: '#dc2626', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: true } },
+  { id: 'slot-9', label: 'Workstation 9', position: [-1, 0, -2.0], zoneId: 'executive', pinNumber: 9, avatarColor: '#4f46e5', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: false } },
+  { id: 'slot-10', label: 'Workstation 10', position: [-13, 0, 2.8], zoneId: 'creative', pinNumber: 10, avatarColor: '#0891b2', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: false } },
+  { id: 'slot-11', label: 'Workstation 11', position: [-9, 0, 2.8], zoneId: 'growth', pinNumber: 11, avatarColor: '#16a34a', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: false } },
+  { id: 'slot-12', label: 'Workstation 12', position: [-5, 0, 2.8], zoneId: 'executive', pinNumber: 12, avatarColor: '#9333ea', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: true } },
+  { id: 'slot-13', label: 'Workstation 13', position: [-1, 0, 2.8], zoneId: 'growth', pinNumber: 13, avatarColor: '#0284c7', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: true } },
+  { id: 'slot-14', label: 'Workstation 14', position: [-10, 0, 7.5], zoneId: 'tech', pinNumber: 14, avatarColor: '#e11d48', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: true } },
+  { id: 'slot-15', label: 'Workstation 15', position: [-4, 0, 7.5], zoneId: 'creative', pinNumber: 15, avatarColor: '#475569', metadata: { desk: 'workstation' as OfficeDeskKind, dualMonitor: true } },
+  { id: 'slot-16', label: 'Meeting room desk A', position: [7.5, 0, 7.5], rotation: [0, -Math.PI / 4, 0], zoneId: 'operations', pinNumber: 16, avatarColor: '#ca8a04', metadata: { desk: 'meeting' as OfficeDeskKind, dualMonitor: false } },
+  { id: 'slot-17', label: 'Meeting room desk B', position: [13.5, 0, 7.5], rotation: [0, Math.PI / 4, 0], zoneId: 'meeting', pinNumber: 17, avatarColor: '#059669', metadata: { desk: 'meeting' as OfficeDeskKind, dualMonitor: true } },
 ]
 
 export const officePreset: WorldPreset = {
@@ -404,7 +133,7 @@ export const officePreset: WorldPreset = {
     nightBackgroundColor: '#0f172a',
   },
   zones: DEFAULT_OFFICE_ZONES,
-  defaultEntities: DEFAULT_OFFICE_ENTITIES,
+  slots: OFFICE_SLOTS,
 
   buildScene: (scene: THREE.Scene, options) => {
     const materials = new MaterialPalette()
@@ -417,56 +146,36 @@ export const officePreset: WorldPreset = {
     })
     scene.add(arch)
 
-    // 2. Executive Suite Desk (Slot 1)
-    const execDesk = createExecutiveDesk(materials, { entityId: 'slot-1' })
-    execDesk.position.set(11, 0, -5.5)
-    scene.add(execDesk)
+    // 2. Desk furniture is generated from the architectural slot anchors —
+    //    the same data consumer entities are auto-placed onto.
+    for (const slot of OFFICE_SLOTS) {
+      const kind = (slot.metadata?.desk as OfficeDeskKind) || 'workstation'
+      const dual = slot.metadata?.dualMonitor !== false
+
+      if (kind === 'executive') {
+        const desk = createExecutiveDesk(materials, { entityId: slot.id })
+        desk.position.set(slot.position[0], slot.position[1], slot.position[2])
+        if (slot.rotation) desk.rotation.set(slot.rotation[0], slot.rotation[1], slot.rotation[2])
+        scene.add(desk)
+        continue
+      }
+
+      const desk = createModernWorkstation(materials, {
+        entityId: slot.id,
+        dualMonitor: dual,
+        hasLaptop: true,
+      })
+      desk.position.set(slot.position[0], slot.position[1], slot.position[2])
+      if (slot.rotation) desk.rotation.set(slot.rotation[0], slot.rotation[1], slot.rotation[2])
+      scene.add(desk)
+    }
 
     // 3. Conference Table in Meeting Room (Center of east parquet wing)
     const confTable = createConferenceTable(materials)
     confTable.position.set(11, 0, 2.5)
     scene.add(confTable)
 
-    // 4. Meeting Room Desks (Slots 16 & 17)
-    const desk16 = createModernWorkstation(materials, { entityId: 'slot-16', dualMonitor: false })
-    desk16.position.set(7.5, 0, 7.5)
-    desk16.rotation.y = -Math.PI / 4
-    scene.add(desk16)
-
-    const desk17 = createModernWorkstation(materials, { entityId: 'slot-17', dualMonitor: true })
-    desk17.position.set(13.5, 0, 7.5)
-    desk17.rotation.y = Math.PI / 4
-    scene.add(desk17)
-
-    // 5. Open Office Desks (Slots 2-15)
-    const workstationSlots: Array<{ id: string; pos: [number, number, number]; dual: boolean }> = [
-      { id: 'slot-2', pos: [-13, 0, -6.8], dual: false },
-      { id: 'slot-3', pos: [-9, 0, -6.8], dual: true },
-      { id: 'slot-4', pos: [-5, 0, -6.8], dual: false },
-      { id: 'slot-5', pos: [-1, 0, -6.8], dual: true },
-      { id: 'slot-6', pos: [-13, 0, -2.0], dual: false },
-      { id: 'slot-7', pos: [-9, 0, -2.0], dual: true },
-      { id: 'slot-8', pos: [-5, 0, -2.0], dual: true },
-      { id: 'slot-9', pos: [-1, 0, -2.0], dual: false },
-      { id: 'slot-10', pos: [-13, 0, 2.8], dual: false },
-      { id: 'slot-11', pos: [-9, 0, 2.8], dual: false },
-      { id: 'slot-12', pos: [-5, 0, 2.8], dual: true },
-      { id: 'slot-13', pos: [-1, 0, 2.8], dual: true },
-      { id: 'slot-14', pos: [-10, 0, 7.5], dual: true },
-      { id: 'slot-15', pos: [-4, 0, 7.5], dual: true },
-    ]
-
-    for (const ws of workstationSlots) {
-      const desk = createModernWorkstation(materials, {
-        entityId: ws.id,
-        dualMonitor: ws.dual,
-        hasLaptop: true,
-      })
-      desk.position.set(ws.pos[0], ws.pos[1], ws.pos[2])
-      scene.add(desk)
-    }
-
-    // 6. Architectural Ficus Indoor Plants
+    // 4. Architectural Ficus Indoor Plants
     const plantCoords: [number, number][] = [
       [-17, -9],
       [-17, 9],
@@ -482,7 +191,7 @@ export const officePreset: WorldPreset = {
       scene.add(plant)
     }
 
-    // 7. Executive Bookcases & Lounge Breakout Real 3D Models
+    // 5. Executive Bookcases & Lounge Breakout Real 3D Models
     const loader = ModelLoader.getInstance()
     void loader.load('furniture:bookcaseOpen').then((bookcase) => {
       if (bookcase) {
