@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { ProceduralTextureFactory } from './textures'
 
 export class MaterialPalette {
   private materials: Map<string, THREE.Material> = new Map()
@@ -11,22 +12,26 @@ export class MaterialPalette {
   }
 
   // Floors
-  getTileFloor(color = '#e2e8f0'): THREE.MeshStandardMaterial {
+  getTileFloor(color = '#f1f5f9'): THREE.MeshStandardMaterial {
     return this.getMaterial(`floor:tile:${color}`, () => {
+      const tex = ProceduralTextureFactory.getTileFloorTexture()
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
-        roughness: 0.35,
-        metalness: 0.05,
+        map: tex,
+        roughness: 0.28,
+        metalness: 0.04,
       })
     })
   }
 
-  getWoodParquet(color = '#b48a58'): THREE.MeshStandardMaterial {
+  getWoodParquet(color = '#b68957'): THREE.MeshStandardMaterial {
     return this.getMaterial(`floor:wood:${color}`, () => {
+      const tex = ProceduralTextureFactory.getWoodParquetTexture()
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
-        roughness: 0.45,
-        metalness: 0.1,
+        map: tex,
+        roughness: 0.35,
+        metalness: 0.06,
       })
     })
   }
@@ -37,6 +42,19 @@ export class MaterialPalette {
         color: new THREE.Color(color),
         roughness: 0.5,
         metalness: 0.15,
+      })
+    })
+  }
+
+  // Contact Shadow Material
+  getContactShadowMaterial(): THREE.MeshBasicMaterial {
+    return this.getMaterial('shadow:contact', () => {
+      const shadowTex = ProceduralTextureFactory.getSoftShadowTexture()
+      return new THREE.MeshBasicMaterial({
+        map: shadowTex,
+        transparent: true,
+        opacity: 0.7,
+        depthWrite: false,
       })
     })
   }
@@ -56,23 +74,23 @@ export class MaterialPalette {
     return this.getMaterial(`frame:${color}`, () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
-        roughness: 0.3,
-        metalness: 0.7,
+        roughness: 0.25,
+        metalness: 0.8,
       })
     })
   }
 
-  getGlassMaterial(color = '#93c5fd', opacity = 0.28): THREE.MeshPhysicalMaterial {
+  getGlassMaterial(color = '#93c5fd', opacity = 0.24): THREE.MeshPhysicalMaterial {
     return this.getMaterial(`glass:${color}:${opacity}`, () => {
       return new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(color),
         transparent: true,
         opacity,
-        roughness: 0.08,
+        roughness: 0.05,
         metalness: 0.1,
-        transmission: 0.85,
-        ior: 1.5,
-        reflectivity: 0.7,
+        transmission: 0.9,
+        ior: 1.52,
+        reflectivity: 0.8,
         depthWrite: false,
       })
     })
@@ -83,8 +101,8 @@ export class MaterialPalette {
     return this.getMaterial(`furniture:desktop:${color}`, () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
-        roughness: 0.4,
-        metalness: 0.1,
+        roughness: 0.35,
+        metalness: 0.08,
       })
     })
   }
@@ -93,7 +111,7 @@ export class MaterialPalette {
     return this.getMaterial('furniture:executive_wood', () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color('#382212'),
-        roughness: 0.3,
+        roughness: 0.28,
         metalness: 0.15,
       })
     })
@@ -103,7 +121,7 @@ export class MaterialPalette {
     return this.getMaterial(`furniture:leather:${color}`, () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
-        roughness: 0.6,
+        roughness: 0.55,
         metalness: 0.05,
       })
     })
@@ -112,7 +130,7 @@ export class MaterialPalette {
   getMetalLegMaterial(): THREE.MeshStandardMaterial {
     return this.getMaterial('furniture:metal_legs', () => {
       return new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#334155'),
+        color: new THREE.Color('#1e293b'),
         roughness: 0.2,
         metalness: 0.85,
       })
@@ -123,16 +141,17 @@ export class MaterialPalette {
     return this.getMaterial('tech:bezel', () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color('#090d16'),
-        roughness: 0.25,
-        metalness: 0.75,
+        roughness: 0.2,
+        metalness: 0.8,
       })
     })
   }
 
-  getMonitorScreenMaterial(active = true, color = '#38bdf8'): THREE.MeshBasicMaterial {
-    return this.getMaterial(`tech:screen:${active}:${color}`, () => {
+  getMonitorScreenMaterial(type: 'code' | 'dashboard' | 'charts' = 'dashboard'): THREE.MeshBasicMaterial {
+    return this.getMaterial(`tech:screen:${type}`, () => {
+      const tex = ProceduralTextureFactory.getScreenTexture(type)
       return new THREE.MeshBasicMaterial({
-        color: new THREE.Color(active ? color : '#0f172a'),
+        map: tex,
       })
     })
   }
@@ -141,7 +160,7 @@ export class MaterialPalette {
     return this.getMaterial('nature:ficus_leaves', () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color('#15803d'),
-        roughness: 0.5,
+        roughness: 0.45,
         metalness: 0.05,
       })
     })
@@ -157,13 +176,13 @@ export class MaterialPalette {
     })
   }
 
-  // Avatars / People
+  // Realistic Avatars / People
   getSkinMaterial(color = '#fbcfe8'): THREE.MeshStandardMaterial {
     return this.getMaterial(`person:skin:${color}`, () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
-        roughness: 0.6,
-        metalness: 0.05,
+        roughness: 0.5,
+        metalness: 0.02,
       })
     })
   }
@@ -172,8 +191,8 @@ export class MaterialPalette {
     return this.getMaterial(`person:hair:${color}`, () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
-        roughness: 0.7,
-        metalness: 0.05,
+        roughness: 0.65,
+        metalness: 0.04,
       })
     })
   }
@@ -182,8 +201,8 @@ export class MaterialPalette {
     return this.getMaterial(`person:clothes:${color}`, () => {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color(color),
-        roughness: 0.65,
-        metalness: 0.08,
+        roughness: 0.6,
+        metalness: 0.06,
       })
     })
   }
@@ -200,7 +219,7 @@ export class MaterialPalette {
       return new THREE.MeshBasicMaterial({
         color: new THREE.Color(color),
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.85,
       })
     })
   }

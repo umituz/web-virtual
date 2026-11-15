@@ -7,22 +7,24 @@ export class WorldLighting {
   private fillLight: THREE.DirectionalLight
   private nightLight: THREE.DirectionalLight
   private hemisphereLight: THREE.HemisphereLight
+  private execSpot: THREE.SpotLight
+  private confSpot: THREE.SpotLight
 
   constructor(
     private scene: THREE.Scene,
     private config: LightingConfiguration = {},
   ) {
     const ambientColor = new THREE.Color(config.ambientColor || '#ffffff')
-    this.ambientLight = new THREE.AmbientLight(ambientColor, config.ambientIntensity ?? 0.85)
+    this.ambientLight = new THREE.AmbientLight(ambientColor, config.ambientIntensity ?? 0.82)
     this.scene.add(this.ambientLight)
 
-    this.hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444455, 0.4)
+    this.hemisphereLight = new THREE.HemisphereLight(0xfffbf5, 0x334155, 0.45)
     this.hemisphereLight.position.set(0, 50, 0)
     this.scene.add(this.hemisphereLight)
 
-    const sunColor = new THREE.Color(config.sunColor || '#fff5ea')
-    this.mainSun = new THREE.DirectionalLight(sunColor, config.sunIntensity ?? 1.1)
-    const sunPos = config.sunPosition || [20, 30, 15]
+    const sunColor = new THREE.Color(config.sunColor || '#fff7ed')
+    this.mainSun = new THREE.DirectionalLight(sunColor, config.sunIntensity ?? 1.15)
+    const sunPos = config.sunPosition || [22, 32, 18]
     this.mainSun.position.set(sunPos[0], sunPos[1], sunPos[2])
 
     if (config.shadows !== false) {
@@ -35,16 +37,29 @@ export class WorldLighting {
       this.mainSun.shadow.camera.right = 30
       this.mainSun.shadow.camera.top = 30
       this.mainSun.shadow.camera.bottom = -30
-      this.mainSun.shadow.bias = -0.0005
+      this.mainSun.shadow.bias = -0.0003
     }
     this.scene.add(this.mainSun)
 
-    this.fillLight = new THREE.DirectionalLight(0xdbeafe, 0.4)
+    this.fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.38)
     this.fillLight.position.set(-20, 18, -15)
     this.scene.add(this.fillLight)
 
+    // Warm Architectural Interior Downlights
+    this.execSpot = new THREE.SpotLight(0xfef3c7, 0.55, 18, Math.PI / 4, 0.5, 1.2)
+    this.execSpot.position.set(11, 7.5, -5.5)
+    this.execSpot.target.position.set(11, 0, -5.5)
+    this.scene.add(this.execSpot)
+    this.scene.add(this.execSpot.target)
+
+    this.confSpot = new THREE.SpotLight(0xfef3c7, 0.55, 18, Math.PI / 3.5, 0.5, 1.2)
+    this.confSpot.position.set(11, 7.5, 2.5)
+    this.confSpot.target.position.set(11, 0, 2.5)
+    this.scene.add(this.confSpot)
+    this.scene.add(this.confSpot.target)
+
     this.nightLight = new THREE.DirectionalLight(
-      new THREE.Color(config.nightSunColor || '#60a5fa'),
+      new THREE.Color(config.nightSunColor || '#38bdf8'),
       0,
     )
     this.nightLight.position.set(-15, 25, 20)
@@ -53,21 +68,25 @@ export class WorldLighting {
 
   setNightMode(isNight: boolean): void {
     if (isNight) {
-      this.ambientLight.intensity = this.config.nightAmbientIntensity ?? 0.35
+      this.ambientLight.intensity = this.config.nightAmbientIntensity ?? 0.3
       this.ambientLight.color.set(this.config.nightAmbientColor || '#1e293b')
-      this.mainSun.intensity = 0.15
+      this.mainSun.intensity = 0.1
       this.mainSun.color.set('#3b82f6')
       this.fillLight.intensity = 0.1
-      this.nightLight.intensity = this.config.nightSunIntensity ?? 0.5
+      this.nightLight.intensity = this.config.nightSunIntensity ?? 0.6
       this.hemisphereLight.intensity = 0.15
+      this.execSpot.intensity = 0.8
+      this.confSpot.intensity = 0.8
     } else {
-      this.ambientLight.intensity = this.config.ambientIntensity ?? 0.85
+      this.ambientLight.intensity = this.config.ambientIntensity ?? 0.82
       this.ambientLight.color.set(this.config.ambientColor || '#ffffff')
-      this.mainSun.intensity = this.config.sunIntensity ?? 1.1
-      this.mainSun.color.set(this.config.sunColor || '#fff5ea')
-      this.fillLight.intensity = 0.4
+      this.mainSun.intensity = this.config.sunIntensity ?? 1.15
+      this.mainSun.color.set(this.config.sunColor || '#fff7ed')
+      this.fillLight.intensity = 0.38
       this.nightLight.intensity = 0
-      this.hemisphereLight.intensity = 0.4
+      this.hemisphereLight.intensity = 0.45
+      this.execSpot.intensity = 0.55
+      this.confSpot.intensity = 0.55
     }
   }
 
@@ -77,5 +96,9 @@ export class WorldLighting {
     this.scene.remove(this.fillLight)
     this.scene.remove(this.nightLight)
     this.scene.remove(this.hemisphereLight)
+    this.scene.remove(this.execSpot)
+    this.scene.remove(this.execSpot.target)
+    this.scene.remove(this.confSpot)
+    this.scene.remove(this.confSpot.target)
   }
 }

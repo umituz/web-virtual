@@ -162,7 +162,7 @@ export function buildOfficeArchitecture(
 
   const boardScreen = new THREE.Mesh(
     new THREE.PlaneGeometry(3.5, 1.7),
-    materials.getMonitorScreenMaterial(true, '#1e3a8a'),
+    materials.getMonitorScreenMaterial('charts'),
   )
   boardScreen.position.set(0, 0, 0.032)
   boardGroup.add(boardScreen)

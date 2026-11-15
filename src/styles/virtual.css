@@ -39,15 +39,16 @@
   transform: translate(-50%, -100%);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: 5px;
+  padding: 3px 8px;
+  max-width: 135px;
   border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(203, 213, 225, 0.8);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   color: #0f172a;
   cursor: pointer;
@@ -56,15 +57,24 @@
 }
 
 .wv-pin-chip:hover {
-  transform: translate(-50%, -100%) scale(1.08);
+  transform: translate(-50%, -100%) scale(1.06);
   background-color: #ffffff;
   border-color: #3b82f6;
+  max-width: 220px;
   z-index: 50;
 }
 
 .wv-pin-chip.is-selected {
+  max-width: 220px;
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4), 0 6px 16px rgba(0, 0, 0, 0.2);
+  z-index: 40;
+}
+
+.wv-pin-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .wv-pin-circle {

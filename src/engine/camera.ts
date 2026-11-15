@@ -30,7 +30,11 @@ export class WorldCamera {
 
     this.controls = new OrbitControls(this.camera, canvas)
     this.controls.enableDamping = config.enableDamping ?? true
-    this.controls.dampingFactor = config.dampingFactor ?? 0.05
+    this.controls.dampingFactor = config.dampingFactor ?? 0.08
+    this.controls.rotateSpeed = 0.95
+    this.controls.zoomSpeed = 1.25
+    this.controls.panSpeed = 1.0
+    this.controls.screenSpacePanning = true
     this.controls.maxPolarAngle = config.maxPolarAngle ?? Math.PI / 2 - 0.05
     this.controls.minDistance = config.minDistance ?? 8
     this.controls.maxDistance = config.maxDistance ?? 65

@@ -54,11 +54,14 @@ export class DirectDOMProjector {
       const el = elementMap.get(entity.id)
       if (!el) continue
 
-      // Head / top of desk elevation offset (+ 1.5 units)
+      // Elevation offset above avatar head (chair seated at z offset)
+      const isExec = entity.id === 'slot-1' || entity.zoneId === 'executive'
+      const seatZ = isExec ? 0.62 : 0.44
+
       this.tempVec.set(
         entity.position[0],
-        entity.position[1] + 1.45,
-        entity.position[2],
+        entity.position[1] + 1.6,
+        entity.position[2] + seatZ,
       )
 
       this.tempVec.project(camera)
@@ -74,6 +77,7 @@ export class DirectDOMProjector {
       const screenY = -(this.tempVec.y * halfH) + halfH
 
       el.style.transform = `translate3d(${screenX}px, ${screenY}px, 0)`
+      el.style.zIndex = String(Math.max(1, Math.round((1 - this.tempVec.z) * 1000)))
     }
   }
 }

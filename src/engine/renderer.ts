@@ -68,8 +68,20 @@ export class WorldEngine {
   }
 
   private initEventListeners(canvas: HTMLCanvasElement): void {
+    let pointerDownX = 0
+    let pointerDownY = 0
+
     const handlePointerDown = (e: MouseEvent) => {
+      pointerDownX = e.clientX
+      pointerDownY = e.clientY
+    }
+
+    const handleClick = (e: MouseEvent) => {
       if (e.button !== 0) return // Left click only
+      // If mouse moved more than 6px between mousedown and mouseup/click, it was a camera drag
+      const dragDist = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY)
+      if (dragDist > 6) return
+
       const rect = canvas.getBoundingClientRect()
       const hit = this.raycaster.intersect(
         e.clientX,
@@ -115,12 +127,14 @@ export class WorldEngine {
       }
     }
 
-    canvas.addEventListener('click', handlePointerDown)
+    canvas.addEventListener('pointerdown', handlePointerDown)
+    canvas.addEventListener('click', handleClick)
     canvas.addEventListener('mousemove', handlePointerMove)
 
     // Store unbind callbacks on instance
     this.unbindEvents = () => {
-      canvas.removeEventListener('click', handlePointerDown)
+      canvas.removeEventListener('pointerdown', handlePointerDown)
+      canvas.removeEventListener('click', handleClick)
       canvas.removeEventListener('mousemove', handlePointerMove)
     }
   }

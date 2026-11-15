@@ -32,7 +32,7 @@ export function EntityPins({
             className="wv-pin-anchor"
             style={{ display: 'none' }} // initially hidden until projector places it
           >
-            {mode === 'pins' && !isSelected && !isRunning ? (
+            {mode === 'pins' && !isSelected ? (
               <button
                 type="button"
                 className={`wv-pin-circle ${isSelected ? 'is-selected' : ''}`}
@@ -53,10 +53,11 @@ export function EntityPins({
                   e.stopPropagation()
                   onSelectEntity(entity)
                 }}
+                title={`${entity.name} (${entity.role || entity.type})`}
               >
                 <span className={`wv-status-pip ${entity.status || 'idle'}`} />
-                <span style={{ fontWeight: 700 }}>{pinText}</span>
-                <span>{entity.pinLabel || entity.name}</span>
+                <span style={{ fontWeight: 700, flexShrink: 0 }}>{pinText}</span>
+                <span className="wv-pin-label-text">{entity.pinLabel || entity.name}</span>
               </button>
             )}
           </div>

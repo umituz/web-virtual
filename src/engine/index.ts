@@ -1,3 +1,4 @@
+export * from './textures'
 export * from './materials'
 export * from './lighting'
 export * from './camera'

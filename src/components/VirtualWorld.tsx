@@ -143,6 +143,15 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       }
       engine.scene.add(avatarGroup)
 
+      // 3. Register all interactive objects with entityId (workstations, chairs, monitors, avatars)
+      engine.scene.traverse((obj) => {
+        if (obj.userData && obj.userData.entityId) {
+          if (!engine.interactiveObjects.includes(obj)) {
+            engine.interactiveObjects.push(obj)
+          }
+        }
+      })
+
       // Resize Observer
       const resizeObserver = new ResizeObserver((entries) => {
         for (const entry of entries) {

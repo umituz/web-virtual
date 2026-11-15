@@ -103,7 +103,7 @@ export const schoolPreset: WorldPreset = {
     // Teacher podium / Smartboard
     const board = new THREE.Mesh(
       new THREE.BoxGeometry(4.5, 2.2, 0.08),
-      materials.getMonitorScreenMaterial(true, '#1e1b4b'),
+      materials.getMonitorScreenMaterial('dashboard'),
     )
     board.position.set(-6, 2.0, -9)
     scene.add(board)
