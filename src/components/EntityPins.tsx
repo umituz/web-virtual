@@ -22,7 +22,6 @@ export function EntityPins({
     <div className="wv-pins-overlay" aria-hidden="true">
       {entities.map((entity) => {
         const isSelected = selectedEntityId === entity.id
-        const isRunning = entity.status === 'running' || entity.status === 'working'
         const pinText = entity.pinNumber ? `#${entity.pinNumber}` : entity.name.slice(0, 3)
 
         return (
