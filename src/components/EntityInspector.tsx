@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect } from 'react'
-import { X, Focus, Play, CheckCircle2, AlertCircle, Clock, ChevronRight } from 'lucide-react'
+import { X, Focus } from 'lucide-react'
 import type { WorldEntity } from '../core/types'
 
 export interface EntityInspectorProps {
@@ -27,7 +27,6 @@ export function EntityInspector({
 
   if (!entity) return null
 
-  const isPerson = entity.type === 'person' || entity.type === 'actor'
   const isRunning = entity.status === 'running' || entity.status === 'working'
 
   return (

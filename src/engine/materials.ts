@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import type { WorldTheme } from '../core/types'
 
 export class MaterialPalette {
   private materials: Map<string, THREE.Material> = new Map()

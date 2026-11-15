@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { WorldDefinition, WorldEntity, PinDisplayMode, EntitySelectedEvent } from '../core/types'
+import type { WorldDefinition, WorldEntity, EntitySelectedEvent } from '../core/types'
 import { MaterialPalette } from './materials'
 import { WorldLighting } from './lighting'
 import { WorldCamera, type CameraPresetName } from './camera'

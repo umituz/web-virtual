@@ -4,7 +4,6 @@ import { MaterialPalette } from '../engine/materials'
 import { buildOfficeArchitecture } from '../entities/architecture/OfficeArchitectureBuilder'
 import { createModernWorkstation, createExecutiveDesk, createConferenceTable } from '../entities/furniture/DeskBuilder'
 import { createFicusPlant } from '../entities/props/PlantBuilder'
-import { createStylizedAvatar } from '../entities/people/AvatarBuilder'
 
 export const DEFAULT_OFFICE_ZONES: WorldZone[] = [
   {
@@ -48,6 +47,76 @@ export const DEFAULT_OFFICE_ZONES: WorldZone[] = [
     color: '#f59e0b',
     description: 'Bütçe, fatura, kurumsal arşiv ve operasyonel kalite kontrol merkezi.',
     cameraFocus: [-6, 1.0, 7.8],
+  },
+]
+
+export interface DepartmentInfo {
+  id: string
+  name: string
+  slug: string
+  description: string
+  managerSlotId: string
+  managerRole: string
+  color: string
+  slotIds: string[]
+  iconName?: 'briefcase' | 'palette' | 'megaphone' | 'shield' | 'globe'
+}
+
+export const DEFAULT_OFFICE_DEPARTMENTS: DepartmentInfo[] = [
+  {
+    id: 'dept-management',
+    name: 'Genel Yönetim & Strateji',
+    slug: 'management',
+    description: 'Şirket vizyonu, departman koordinasyonu, stratejik iş planlaması ve onay denetimleri.',
+    managerSlotId: 'slot-1',
+    managerRole: 'Dijital Ajans Yöneticisi (Genel Müdür)',
+    color: '#3b82f6',
+    slotIds: ['slot-1', 'slot-13'],
+    iconName: 'briefcase',
+  },
+  {
+    id: 'dept-creative',
+    name: 'İçerik & Kreatif Tasarım',
+    slug: 'creative',
+    description: 'Sosyal medya içerikleri, görsel konseptler, reklam kancaları ve viral video prodüksiyonu.',
+    managerSlotId: 'slot-3',
+    managerRole: 'Kreatif Görsel Direktörü',
+    color: '#a855f7',
+    slotIds: ['slot-2', 'slot-3', 'slot-4', 'slot-5'],
+    iconName: 'palette',
+  },
+  {
+    id: 'dept-marketing',
+    name: 'Pazarlama & Büyüme',
+    slug: 'marketing',
+    description: 'Google & Meta reklamları, organik SEO, e-posta funnel otomasyonu ve müşteri ilişkileri (CRM).',
+    managerSlotId: 'slot-6',
+    managerRole: 'Performans Pazarlama & Medya Satın Alma',
+    color: '#10b981',
+    slotIds: ['slot-6', 'slot-7', 'slot-8', 'slot-9', 'slot-14'],
+    iconName: 'megaphone',
+  },
+  {
+    id: 'dept-tech',
+    name: 'Teknoloji, UI/UX & Veri',
+    slug: 'tech',
+    description: 'Dönüşüm odaklı web arayüzleri, açılış sayfaları tel kafesleri ve kampanya büyüme analitiği.',
+    managerSlotId: 'slot-11',
+    managerRole: 'UI/UX & Web Arayüz Tasarımcısı',
+    color: '#06b6d4',
+    slotIds: ['slot-11', 'slot-12'],
+    iconName: 'globe',
+  },
+  {
+    id: 'dept-operations',
+    name: 'Operasyon, Kalite & Finans',
+    slug: 'operations',
+    description: 'Gelir/gider dengesi, bütçe denetimi, kalite güvence kontrolleri ve kurumsal bilgi arşivi.',
+    managerSlotId: 'slot-10',
+    managerRole: 'Ajans Muhasebecisi & Finans Uzmanı',
+    color: '#f59e0b',
+    slotIds: ['slot-10', 'slot-15', 'slot-16', 'slot-17'],
+    iconName: 'shield',
   },
 ]
 

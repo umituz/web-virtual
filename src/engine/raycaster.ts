@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import type { WorldEntity } from '../core/types'
 
 export interface RaycastHit {
   entityId: string
