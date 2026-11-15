@@ -1,6 +1,6 @@
 {
   "name": "@umituz/web-virtual",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Universal 3D Virtual Environment Engine for Web & React — Offices, Farms, Factories, Schools, Hospitals with 60fps performance, raycasting and interactive entities.",
   "type": "module",
   "main": "./src/index.ts",
