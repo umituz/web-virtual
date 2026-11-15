@@ -37,7 +37,7 @@ export class WorldEngine {
     const { canvas, world } = options
 
     this.scene = new THREE.Scene()
-    this.scene.background = new THREE.Color(world.theme.backgroundColor || '#0f172a')
+    this.scene.background = new THREE.Color(world.theme.backgroundColor || '#f8fafc')
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -150,8 +150,8 @@ export class WorldEngine {
   public setNightMode(isNight: boolean): void {
     this.lighting.setNightMode(isNight)
     const bgColor = isNight
-      ? this.options.world.theme.nightBackgroundColor || '#020617'
-      : this.options.world.theme.backgroundColor || '#0f172a'
+      ? this.options.world.theme.nightBackgroundColor || '#0f172a'
+      : this.options.world.theme.backgroundColor || '#f8fafc'
     this.scene.background = new THREE.Color(bgColor)
   }
 

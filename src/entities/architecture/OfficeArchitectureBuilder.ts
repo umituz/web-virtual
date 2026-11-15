@@ -48,6 +48,22 @@ export function buildOfficeArchitecture(
   gridHelper.position.set(-W / 2 + openW / 2, 0.004, 0)
   root.add(gridHelper)
 
+  // Architectural studio podium ground & subtle extended grid
+  const groundMat = new THREE.MeshStandardMaterial({
+    color: 0xf8fafc,
+    roughness: 0.96,
+    metalness: 0.04,
+  })
+  const groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(140, 140), groundMat)
+  groundMesh.rotation.x = -Math.PI / 2
+  groundMesh.position.set(0, -0.015, 0)
+  groundMesh.receiveShadow = true
+  root.add(groundMesh)
+
+  const outerGrid = new THREE.GridHelper(120, 60, 0xe2e8f0, 0xf1f5f9)
+  outerGrid.position.set(0, -0.01, 0)
+  root.add(outerGrid)
+
   // 2. Outer Perimeter Glass Walls & Dark Structural Columns
   const H = 3.6
 

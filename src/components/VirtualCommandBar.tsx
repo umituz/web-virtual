@@ -19,6 +19,8 @@ export interface VirtualCommandBarProps {
   onToggleDemoMode?: () => void
   isLaunching?: boolean
   defaultOpen?: boolean
+  isOpen?: boolean
+  onToggleOpen?: (open: boolean) => void
   placeholder?: string
   className?: string
 }
@@ -34,22 +36,30 @@ export function VirtualCommandBar({
   isDemoMode = true,
   onToggleDemoMode,
   isLaunching = false,
-  defaultOpen = true,
+  defaultOpen = false,
+  isOpen: externalIsOpen,
+  onToggleOpen,
   placeholder = "Genel Müdür'e veya bir uzmana görev verin... (Enter ile gönder)",
   className = '',
 }: VirtualCommandBarProps): ReactNode {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen)
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
+
+  const handleToggle = (open: boolean) => {
+    setInternalIsOpen(open)
+    if (onToggleOpen) onToggleOpen(open)
+  }
 
   if (!isOpen) {
     return (
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={() => handleToggle(true)}
         className="wv-command-collapsed-btn"
         aria-label="Komut Barını Aç"
       >
         <Send size={14} color="#3b82f6" />
-        <span>Komut ve Görev Barını Aç ▲</span>
+        <span>⚡ Görev Paneli ▲</span>
       </button>
     )
   }
@@ -74,7 +84,7 @@ export function VirtualCommandBar({
 
           <button
             type="button"
-            onClick={() => setIsOpen(false)}
+            onClick={() => handleToggle(false)}
             className="wv-collapse-btn"
             title="Komut Barını Küçült"
           >

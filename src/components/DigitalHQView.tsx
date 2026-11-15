@@ -26,8 +26,12 @@ import {
   Send,
   Loader2,
   Eye,
+  Tag,
+  Moon,
+  Sun,
+  RotateCcw,
 } from 'lucide-react'
-import type { WorldDefinition, WorldEntity, WorldPreset } from '../core/types'
+import type { WorldDefinition, WorldEntity, WorldPreset, PinDisplayMode } from '../core/types'
 import { VirtualWorld, type VirtualWorldRef } from './VirtualWorld'
 import { VirtualCommandBar, type PresetMission } from './VirtualCommandBar'
 import { VirtualRoster } from './VirtualRoster'
@@ -99,10 +103,22 @@ export function DigitalHQView({
   // Navigation Mode
   const [activeMode, setActiveMode] = useState<OperationalMode>('office')
 
-  // Layout / Sidebar
+  // Layout / Sidebar / Toggles (Pure Zen Office Mode by default)
   const virtualWorldRef = useRef<VirtualWorldRef>(null)
-  const [showRoster, setShowRoster] = useState(true)
+  const [showRoster, setShowRoster] = useState(false)
+  const [showCommandBar, setShowCommandBar] = useState(false)
+  const [pinMode, setPinMode] = useState<PinDisplayMode>('off')
+  const [nightMode, setNightMode] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  // Pin cycle toggle: off -> pins (#1..#17) -> labels (full names) -> off
+  const handleCyclePinMode = useCallback(() => {
+    setPinMode((prev) => {
+      if (prev === 'off') return 'pins'
+      if (prev === 'pins') return 'labels'
+      return 'off'
+    })
+  }, [])
 
   // Selection & Report
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null)
@@ -179,7 +195,7 @@ export function DigitalHQView({
   }, [world.entities])
 
   return (
-    <div className={`wv-hq-container ${className}`}>
+    <div className={`wv-hq-container ${nightMode ? 'is-night' : ''} ${className}`}>
       {/* 1. Header Toolbar */}
       <header className="wv-hq-header">
         <div className="wv-hq-header-left">
@@ -267,15 +283,66 @@ export function DigitalHQView({
           )}
 
           {activeMode === 'office' && (
-            <button
-              type="button"
-              onClick={handleToggleRoster}
-              className={`wv-hq-action-btn ${showRoster ? 'is-active' : ''}`}
-              title={showRoster ? 'Kadro Panelini Gizle' : 'Kadro Panelini Aç'}
-            >
-              {showRoster ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
-              <span className="wv-hide-mobile">Kadro Paneli</span>
-            </button>
+            <>
+              {/* Pin Mode 3-Way Cycle Toggle */}
+              <button
+                type="button"
+                onClick={handleCyclePinMode}
+                className={`wv-hq-action-btn ${pinMode !== 'off' ? 'is-active' : ''}`}
+                title="Etiketleri Değiştir: Kapalı ➔ Numaralar (#) ➔ İsimler"
+              >
+                <Tag size={14} />
+                <span>
+                  {pinMode === 'off' ? 'Etiketler: Kapalı' : pinMode === 'pins' ? 'Masa No (#)' : 'İsimler'}
+                </span>
+              </button>
+
+              {/* Command Bar Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowCommandBar((prev) => !prev)}
+                className={`wv-hq-action-btn ${showCommandBar ? 'is-active' : ''}`}
+                title={showCommandBar ? 'Görev Panelini Kapat' : 'Görev Panelini Aç'}
+              >
+                <Terminal size={14} />
+                <span className="wv-hide-mobile">Görev Paneli</span>
+              </button>
+
+              {/* Roster Sidebar Toggle */}
+              <button
+                type="button"
+                onClick={handleToggleRoster}
+                className={`wv-hq-action-btn ${showRoster ? 'is-active' : ''}`}
+                title={showRoster ? 'Kadro Panelini Gizle' : 'Kadro Panelini Aç'}
+              >
+                {showRoster ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+                <span className="wv-hide-mobile">Kadro ({world.entities.length})</span>
+              </button>
+
+              {/* Lighting Toggle */}
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !nightMode
+                  setNightMode(next)
+                  virtualWorldRef.current?.setNightMode(next)
+                }}
+                className="wv-hq-icon-btn"
+                title={nightMode ? 'Gündüz Moduna Geç (Mimari Beyaz)' : 'Gece Moduna Geç (Akşam Işıkları)'}
+              >
+                {nightMode ? <Sun size={15} color="#f59e0b" /> : <Moon size={15} />}
+              </button>
+
+              {/* Camera Reset */}
+              <button
+                type="button"
+                onClick={() => virtualWorldRef.current?.resetCamera()}
+                className="wv-hq-icon-btn"
+                title="Kamerayı Varsayılan İzometrik Açıya Sıfırla"
+              >
+                <RotateCcw size={15} />
+              </button>
+            </>
           )}
 
           {!standalone ? (
@@ -351,8 +418,15 @@ export function DigitalHQView({
                 preset={preset}
                 selectedEntityId={activeEntity?.id}
                 onSelectEntity={handleSelect}
-                defaultPinMode="pins"
-                showControls={true}
+                pinMode={pinMode}
+                onChangePinMode={setPinMode}
+                nightMode={nightMode}
+                onToggleNightMode={() => {
+                  const next = !nightMode
+                  setNightMode(next)
+                  virtualWorldRef.current?.setNightMode(next)
+                }}
+                showControls={false}
                 showInspector={false}
               >
                 {/* Floating Bottom Command Bar Overlay */}
@@ -367,6 +441,8 @@ export function DigitalHQView({
                   isDemoMode={isDemoMode}
                   onToggleDemoMode={() => setIsDemoMode(!isDemoMode)}
                   isLaunching={isLaunching}
+                  isOpen={showCommandBar}
+                  onToggleOpen={setShowCommandBar}
                 />
               </VirtualWorld>
             </div>

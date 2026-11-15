@@ -36,6 +36,10 @@ export interface VirtualWorldProps {
   onSelectEntity?: (entity: WorldEntity | null) => void
   onHoverEntity?: (entity: WorldEntity | null) => void
   defaultPinMode?: PinDisplayMode
+  pinMode?: PinDisplayMode
+  onChangePinMode?: (mode: PinDisplayMode) => void
+  nightMode?: boolean
+  onToggleNightMode?: () => void
   showControls?: boolean
   showInspector?: boolean
   className?: string
@@ -53,7 +57,11 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       selectedEntityId,
       onSelectEntity,
       onHoverEntity,
-      defaultPinMode = 'pins',
+      defaultPinMode = 'off',
+      pinMode: externalPinMode,
+      onChangePinMode,
+      nightMode: externalNightMode,
+      onToggleNightMode: externalToggleNightMode,
       showControls = true,
       showInspector = true,
       className = '',
@@ -69,10 +77,13 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
     const engineRef = useRef<WorldEngine | null>(null)
     const pinElementsRef = useRef<Map<string, HTMLElement>>(new Map())
 
-    const [nightMode, setNightMode] = useState(false)
-    const [pinMode, setPinMode] = useState<PinDisplayMode>(defaultPinMode)
+    const [internalNightMode, setInternalNightMode] = useState(false)
+    const [internalPinMode, setInternalPinMode] = useState<PinDisplayMode>(defaultPinMode)
     const [fps, setFps] = useState<number>(60)
     const [internalSelectedEntity, setInternalSelectedEntity] = useState<WorldEntity | null>(null)
+
+    const nightMode = externalNightMode !== undefined ? externalNightMode : internalNightMode
+    const pinMode = externalPinMode !== undefined ? externalPinMode : internalPinMode
 
     // Determine active selected entity (controlled or uncontrolled)
     const activeEntity =
@@ -171,16 +182,29 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       }
     }, [world, preset, handleSelectEntity, onHoverEntity])
 
+    // Sync Night Mode with engine
+    useEffect(() => {
+      if (engineRef.current) {
+        engineRef.current.setNightMode(nightMode)
+      }
+    }, [nightMode])
+
     // Handle Night Mode Toggle
     const handleToggleNightMode = useCallback(() => {
-      setNightMode((prev) => {
-        const next = !prev
-        if (engineRef.current) {
-          engineRef.current.setNightMode(next)
-        }
-        return next
-      })
-    }, [])
+      if (externalToggleNightMode) {
+        externalToggleNightMode()
+      } else {
+        setInternalNightMode((prev) => !prev)
+      }
+    }, [externalToggleNightMode])
+
+    const handlePinModeChange = useCallback(
+      (newMode: PinDisplayMode) => {
+        setInternalPinMode(newMode)
+        if (onChangePinMode) onChangePinMode(newMode)
+      },
+      [onChangePinMode],
+    )
 
     // Handle Camera Presets
     const handleCameraPreset = useCallback((presetName: CameraPresetName) => {
@@ -215,7 +239,7 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
           if (engineRef.current) engineRef.current.resetCamera()
         },
         setNightMode: (isNight: boolean) => {
-          setNightMode(isNight)
+          setInternalNightMode(isNight)
           if (engineRef.current) engineRef.current.setNightMode(isNight)
         },
         resize: () => {
@@ -231,7 +255,7 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
     return (
       <div
         ref={containerRef}
-        className={`wv-container ${className}`}
+        className={`wv-container ${nightMode ? 'is-night' : ''} ${className}`}
         style={style}
         role="region"
         aria-label={`${world.name} 3D Sanal Ortamı`}
@@ -253,7 +277,7 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
             nightMode={nightMode}
             onToggleNightMode={handleToggleNightMode}
             pinMode={pinMode}
-            onChangePinMode={setPinMode}
+            onChangePinMode={handlePinModeChange}
             onSelectCameraPreset={handleCameraPreset}
             onResetCamera={handleResetCamera}
             fps={fps}

@@ -58,8 +58,8 @@ export function createEnvironment(options: CreateEnvironmentOptions): WorldDefin
     glassOpacity: 0.28,
     accentColor: '#3b82f6',
     gridColor: '#94a3b8',
-    backgroundColor: '#0f172a',
-    nightBackgroundColor: '#020617',
+    backgroundColor: '#f8fafc',
+    nightBackgroundColor: '#0f172a',
     ...(preset?.theme || {}),
     ...(options.theme || {}),
   }
