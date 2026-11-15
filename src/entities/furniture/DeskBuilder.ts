@@ -42,7 +42,6 @@ export function createModernWorkstation(
 
   const desktopMat = materials.getDeskTopMaterial(options.topColor || '#f8fafc')
   const legMat = materials.getMetalLegMaterial()
-  const bezelMat = materials.getMonitorBezelMaterial()
   const chairMat = materials.getLeatherMaterial('#334155')
 
   const topMesh = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.04, 0.8), desktopMat)
@@ -200,7 +199,6 @@ export function createExecutiveDesk(
   if (options.entityId) group.userData = { entityId: options.entityId }
 
   const woodMat = materials.getExecutiveWoodMaterial()
-  const chairMat = materials.getLeatherMaterial('#0f172a')
   const bezelMat = materials.getMonitorBezelMaterial()
   const screenMat = materials.getMonitorScreenMaterial('charts')
   const shadowMat = materials.getContactShadowMaterial()
