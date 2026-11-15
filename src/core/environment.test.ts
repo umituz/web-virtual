@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { createEnvironment, validateEnvironment } from './environment'
-import { officePreset, farmPreset, factoryPreset, schoolPreset, hospitalPreset } from '../presets'
+import { officePreset, farmPreset, factoryPreset, schoolPreset, hospitalPreset } from '../presets/index'
 
 describe('Environment Factory & Presets', () => {
   it('creates an environment using officePreset', () => {

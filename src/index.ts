@@ -1,6 +1,6 @@
 // @umituz/web-virtual — Universal 3D Virtual Environment Engine
-export * from './core'
-export * from './engine'
-export * from './entities'
-export * from './presets'
-export * from './components'
+export * from './core/index'
+export * from './engine/index'
+export * from './entities/index'
+export * from './presets/index'
+export * from './components/index'
