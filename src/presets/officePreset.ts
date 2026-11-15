@@ -4,6 +4,7 @@ import { MaterialPalette } from '../engine/materials'
 import { buildOfficeArchitecture } from '../entities/architecture/OfficeArchitectureBuilder'
 import { createModernWorkstation, createExecutiveDesk, createConferenceTable } from '../entities/furniture/DeskBuilder'
 import { createFicusPlant } from '../entities/props/PlantBuilder'
+import { ModelLoader } from '../engine/modelLoader'
 
 export const DEFAULT_OFFICE_ZONES: WorldZone[] = [
   {
@@ -480,5 +481,41 @@ export const officePreset: WorldPreset = {
       plant.position.set(coord[0], 0, coord[1])
       scene.add(plant)
     }
+
+    // 7. Executive Bookcases & Lounge Breakout Real 3D Models
+    const loader = ModelLoader.getInstance()
+    void loader.load('furniture:bookcaseOpen').then((bookcase) => {
+      if (bookcase) {
+        bookcase.scale.set(1.8, 1.8, 1.8)
+        bookcase.position.set(14.5, 0, -9.2)
+        scene.add(bookcase)
+      }
+    })
+
+    void loader.load('furniture:loungeSofa').then((sofa) => {
+      if (sofa) {
+        sofa.scale.set(1.5, 1.5, 1.5)
+        sofa.position.set(6.5, 0, -2.5)
+        sofa.rotation.y = Math.PI / 2
+        scene.add(sofa)
+      }
+    })
+
+    void loader.load('furniture:tableCoffee').then((coffeeTable) => {
+      if (coffeeTable) {
+        coffeeTable.scale.set(1.4, 1.4, 1.4)
+        coffeeTable.position.set(5.2, 0, -2.5)
+        scene.add(coffeeTable)
+      }
+    })
+
+    void loader.load('furniture:loungeChair').then((armchair) => {
+      if (armchair) {
+        armchair.scale.set(1.4, 1.4, 1.4)
+        armchair.position.set(5.2, 0, -1.2)
+        armchair.rotation.y = Math.PI
+        scene.add(armchair)
+      }
+    })
   },
 }

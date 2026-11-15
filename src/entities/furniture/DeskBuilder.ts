@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import type { MaterialPalette } from '../../engine/materials'
+import { ModelLoader } from '../../engine/modelLoader'
 
 export function createModernWorkstation(
   materials: MaterialPalette,
@@ -15,13 +16,9 @@ export function createModernWorkstation(
     group.userData = { entityId: options.entityId }
   }
 
-  const desktopMat = materials.getDeskTopMaterial(options.topColor || '#f8fafc')
-  const legMat = materials.getMetalLegMaterial()
-  const bezelMat = materials.getMonitorBezelMaterial()
+  const shadowMat = materials.getContactShadowMaterial()
   const screenMat1 = materials.getMonitorScreenMaterial('dashboard')
   const screenMat2 = materials.getMonitorScreenMaterial('code')
-  const chairMat = materials.getLeatherMaterial('#334155')
-  const shadowMat = materials.getContactShadowMaterial()
 
   // 0. Contact Ambient Occlusion Drop Shadows (grounds furniture on floor)
   const deskShadow = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.1), shadowMat)
@@ -34,159 +31,162 @@ export function createModernWorkstation(
   chairShadow.position.set(0, 0.003, 0.48)
   group.add(chairShadow)
 
-  // 1. Desktop surface (1.6m x 0.8m x 0.04m)
-  const topGeo = new THREE.BoxGeometry(1.6, 0.04, 0.8)
-  const topMesh = new THREE.Mesh(topGeo, desktopMat)
+  // 1. Container for 3D Real Models
+  const modelsContainer = new THREE.Group()
+  modelsContainer.name = `workstation-models-${options.entityId || 'generic'}`
+  group.add(modelsContainer)
+
+  // 2. Fallback geometry group (shown instantly while 3D models load)
+  const placeholderGroup = new THREE.Group()
+  placeholderGroup.name = 'workstation-placeholder'
+
+  const desktopMat = materials.getDeskTopMaterial(options.topColor || '#f8fafc')
+  const legMat = materials.getMetalLegMaterial()
+  const bezelMat = materials.getMonitorBezelMaterial()
+  const chairMat = materials.getLeatherMaterial('#334155')
+
+  const topMesh = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.04, 0.8), desktopMat)
   topMesh.position.set(0, 0.74, 0)
   topMesh.castShadow = true
   topMesh.receiveShadow = true
   if (options.entityId) topMesh.userData = { entityId: options.entityId }
-  group.add(topMesh)
+  placeholderGroup.add(topMesh)
 
-  // 2. Desk Legs (Modern metal legs)
-  const legGeo = new THREE.BoxGeometry(0.06, 0.72, 0.7)
-  const leftLeg = new THREE.Mesh(legGeo, legMat)
+  const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.72, 0.7), legMat)
   leftLeg.position.set(-0.7, 0.36, 0)
   leftLeg.castShadow = true
   if (options.entityId) leftLeg.userData = { entityId: options.entityId }
-  group.add(leftLeg)
+  placeholderGroup.add(leftLeg)
 
-  const rightLeg = new THREE.Mesh(legGeo, legMat)
+  const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.72, 0.7), legMat)
   rightLeg.position.set(0.7, 0.36, 0)
   rightLeg.castShadow = true
   if (options.entityId) rightLeg.userData = { entityId: options.entityId }
-  group.add(rightLeg)
+  placeholderGroup.add(rightLeg)
 
-  // 3. Ergonomic Office Chair
-  const chairGroup = new THREE.Group()
-  chairGroup.position.set(0, 0, 0.48)
-  if (options.entityId) chairGroup.userData = { entityId: options.entityId }
+  const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.46), chairMat)
+  chairSeat.position.set(0, 0.46, 0.48)
+  chairSeat.castShadow = true
+  if (options.entityId) chairSeat.userData = { entityId: options.entityId }
+  placeholderGroup.add(chairSeat)
 
-  // Seat
-  const seatGeo = new THREE.BoxGeometry(0.48, 0.08, 0.46)
-  const seat = new THREE.Mesh(seatGeo, chairMat)
-  seat.position.set(0, 0.46, 0)
-  seat.castShadow = true
-  if (options.entityId) seat.userData = { entityId: options.entityId }
-  chairGroup.add(seat)
+  group.add(placeholderGroup)
 
-  // Backrest
-  const backGeo = new THREE.BoxGeometry(0.46, 0.52, 0.06)
-  const back = new THREE.Mesh(backGeo, chairMat)
-  back.position.set(0, 0.74, 0.2)
-  back.rotation.x = -0.1
-  back.castShadow = true
-  if (options.entityId) back.userData = { entityId: options.entityId }
-  chairGroup.add(back)
+  // 3. Asynchronously load and mount real 3D models from Asset Catalog
+  const loader = ModelLoader.getInstance()
+  void Promise.allSettled([
+    loader.load('furniture:desk'),
+    loader.load('furniture:chairDesk'),
+    loader.load('equipment:screen'),
+    options.dualMonitor ? loader.load('equipment:screen') : Promise.resolve(null),
+    loader.load('equipment:keyboard'),
+    loader.load('equipment:mouse'),
+    options.hasLaptop ? loader.load('equipment:laptop') : Promise.resolve(null),
+  ]).then((results) => {
+    // If successfully loaded, replace placeholder with real models
+    const deskModel = results[0].status === 'fulfilled' ? results[0].value : null
+    const chairModel = results[1].status === 'fulfilled' ? results[1].value : null
+    const screenModel1 = results[2].status === 'fulfilled' ? results[2].value : null
+    const screenModel2 = results[3].status === 'fulfilled' ? results[3].value : null
+    const kbModel = results[4].status === 'fulfilled' ? results[4].value : null
+    const mouseModel = results[5].status === 'fulfilled' ? results[5].value : null
+    const laptopModel = results[6].status === 'fulfilled' ? results[6].value : null
 
-  // Base stand & wheels
-  const standGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.42, 8)
-  const stand = new THREE.Mesh(standGeo, legMat)
-  stand.position.set(0, 0.21, 0)
-  chairGroup.add(stand)
+    if (deskModel) {
+      placeholderGroup.visible = false
 
-  group.add(chairGroup)
+      // Real Desk
+      deskModel.scale.set(2.0, 1.95, 2.0)
+      deskModel.position.set(-0.7, 0, 0.38)
+      deskModel.traverse((node) => {
+        if (options.entityId) node.userData = { entityId: options.entityId }
+      })
+      modelsContainer.add(deskModel)
 
-  // 4. Primary Monitor
-  const monitorGroup = new THREE.Group()
-  monitorGroup.position.set(options.dualMonitor ? -0.28 : 0, 0.76, -0.22)
+      // Real Chair
+      if (chairModel) {
+        chairModel.scale.set(2.2, 2.2, 2.2)
+        chairModel.position.set(-0.35, 0, 0.65)
+        chairModel.rotation.y = Math.PI
+        chairModel.traverse((node) => {
+          if (options.entityId) node.userData = { entityId: options.entityId }
+        })
+        modelsContainer.add(chairModel)
+      }
 
-  // Stand
-  const mStandGeo = new THREE.BoxGeometry(0.04, 0.28, 0.04)
-  const mStand = new THREE.Mesh(mStandGeo, legMat)
-  mStand.position.set(0, 0.14, 0)
-  monitorGroup.add(mStand)
+      // Real Primary Screen
+      if (screenModel1) {
+        screenModel1.scale.set(1.5, 1.5, 1.5)
+        screenModel1.position.set(options.dualMonitor ? -0.28 : 0, 0.74, -0.2)
+        screenModel1.traverse((node) => {
+          if (options.entityId) node.userData = { entityId: options.entityId }
+        })
 
-  const mBaseGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.015, 16)
-  const mBase = new THREE.Mesh(mBaseGeo, legMat)
-  mBase.position.set(0, 0.01, 0)
-  monitorGroup.add(mBase)
+        // Overlay glowing dashboard screen plane
+        const disp1 = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.34), screenMat1)
+        disp1.position.set(options.dualMonitor ? -0.28 : 0, 0.98, -0.19)
+        if (options.entityId) disp1.userData = { entityId: options.entityId }
+        modelsContainer.add(disp1)
+        modelsContainer.add(screenModel1)
+      }
 
-  // Screen frame
-  const frameGeo = new THREE.BoxGeometry(0.68, 0.4, 0.03)
-  const frame = new THREE.Mesh(frameGeo, bezelMat)
-  frame.position.set(0, 0.32, 0)
-  frame.castShadow = true
-  if (options.entityId) frame.userData = { entityId: options.entityId }
-  monitorGroup.add(frame)
+      // Real Secondary Screen (Dual Monitor Setup)
+      if (screenModel2) {
+        screenModel2.scale.set(1.5, 1.5, 1.5)
+        screenModel2.position.set(0.35, 0.74, -0.18)
+        screenModel2.rotation.y = -Math.PI / 7
+        screenModel2.traverse((node) => {
+          if (options.entityId) node.userData = { entityId: options.entityId }
+        })
 
-  // Screen display
-  const dispGeo = new THREE.PlaneGeometry(0.64, 0.36)
-  const disp = new THREE.Mesh(dispGeo, screenMat1)
-  disp.position.set(0, 0.32, 0.016)
-  if (options.entityId) disp.userData = { entityId: options.entityId }
-  monitorGroup.add(disp)
+        // Overlay glowing code screen plane
+        const disp2 = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.34), screenMat2)
+        disp2.position.set(0.35, 0.98, -0.17)
+        disp2.rotation.y = -Math.PI / 7
+        if (options.entityId) disp2.userData = { entityId: options.entityId }
+        modelsContainer.add(disp2)
+        modelsContainer.add(screenModel2)
+      }
 
-  group.add(monitorGroup)
+      // Real Keyboard
+      if (kbModel) {
+        kbModel.scale.set(1.5, 1.5, 1.5)
+        kbModel.position.set(0, 0.75, 0.08)
+        kbModel.traverse((node) => {
+          if (options.entityId) node.userData = { entityId: options.entityId }
+        })
+        modelsContainer.add(kbModel)
+      }
 
-  // 5. Secondary Monitor (Dual Monitor Setup)
-  if (options.dualMonitor) {
-    const monitor2 = new THREE.Group()
-    monitor2.position.set(0.35, 0.76, -0.2)
-    monitor2.rotation.y = -Math.PI / 8
+      // Real Mouse
+      if (mouseModel) {
+        mouseModel.scale.set(1.4, 1.4, 1.4)
+        mouseModel.position.set(0.28, 0.75, 0.08)
+        mouseModel.traverse((node) => {
+          if (options.entityId) node.userData = { entityId: options.entityId }
+        })
+        modelsContainer.add(mouseModel)
+      }
 
-    const m2Stand = new THREE.Mesh(mStandGeo, legMat)
-    m2Stand.position.set(0, 0.14, 0)
-    monitor2.add(m2Stand)
+      // Real Laptop
+      if (laptopModel) {
+        laptopModel.scale.set(0.9, 0.9, 0.9)
+        laptopModel.position.set(0.5, 0.75, -0.05)
+        laptopModel.rotation.y = -Math.PI / 6
+        laptopModel.traverse((node) => {
+          if (options.entityId) node.userData = { entityId: options.entityId }
+        })
+        modelsContainer.add(laptopModel)
+      }
+    }
+  })
 
-    const m2Base = new THREE.Mesh(mBaseGeo, legMat)
-    m2Base.position.set(0, 0.01, 0)
-    monitor2.add(m2Base)
-
-    const m2Frame = new THREE.Mesh(frameGeo, bezelMat)
-    m2Frame.position.set(0, 0.32, 0)
-    m2Frame.castShadow = true
-    if (options.entityId) m2Frame.userData = { entityId: options.entityId }
-    monitor2.add(m2Frame)
-
-    const m2Disp = new THREE.Mesh(dispGeo, screenMat2)
-    m2Disp.position.set(0, 0.32, 0.016)
-    if (options.entityId) m2Disp.userData = { entityId: options.entityId }
-    monitor2.add(m2Disp)
-
-    group.add(monitor2)
-  }
-
-  // 6. Laptop (if enabled)
-  if (options.hasLaptop) {
-    const laptopGroup = new THREE.Group()
-    laptopGroup.position.set(0.48, 0.76, -0.05)
-    laptopGroup.rotation.y = -Math.PI / 6
-
-    const baseG = new THREE.BoxGeometry(0.3, 0.015, 0.2)
-    const baseM = new THREE.Mesh(baseG, bezelMat)
-    baseM.position.set(0, 0.007, 0)
-    if (options.entityId) baseM.userData = { entityId: options.entityId }
-    laptopGroup.add(baseM)
-
-    const screenG = new THREE.BoxGeometry(0.3, 0.2, 0.01)
-    const scrM = new THREE.Mesh(screenG, bezelMat)
-    scrM.position.set(0, 0.1, -0.1)
-    scrM.rotation.x = -Math.PI / 12
-    if (options.entityId) scrM.userData = { entityId: options.entityId }
-    laptopGroup.add(scrM)
-
-    group.add(laptopGroup)
-  }
-
-  // 7. Keyboard & Mouse
-  const kbGeo = new THREE.BoxGeometry(0.42, 0.01, 0.14)
-  const kb = new THREE.Mesh(kbGeo, bezelMat)
-  kb.position.set(0, 0.765, 0.08)
-  if (options.entityId) kb.userData = { entityId: options.entityId }
-  group.add(kb)
-
-  const mouseGeo = new THREE.BoxGeometry(0.06, 0.015, 0.1)
-  const mouse = new THREE.Mesh(mouseGeo, bezelMat)
-  mouse.position.set(0.3, 0.765, 0.08)
-  if (options.entityId) mouse.userData = { entityId: options.entityId }
-  group.add(mouse)
-
-  // 8. Ceramic Coffee Mug
+  // Ceramic Coffee Mug
   const mugGeo = new THREE.CylinderGeometry(0.04, 0.035, 0.08, 12)
   const mugMat = materials.getWallMaterial('#ffffff')
   const mug = new THREE.Mesh(mugGeo, mugMat)
   mug.position.set(-0.55, 0.8, -0.1)
+  if (options.entityId) mug.userData = { entityId: options.entityId }
   group.add(mug)
 
   return group
@@ -216,45 +216,46 @@ export function createExecutiveDesk(
   chairShadow.position.set(0, 0.003, 0.65)
   group.add(chairShadow)
 
-  // Main Executive Table (2.2m x 0.9m)
-  const mainGeo = new THREE.BoxGeometry(2.2, 0.08, 0.9)
-  const mainTop = new THREE.Mesh(mainGeo, woodMat)
+  // Real 3D Corner Desk
+  const modelsContainer = new THREE.Group()
+  modelsContainer.name = 'executive-models'
+  group.add(modelsContainer)
+
+  const placeholderGroup = new THREE.Group()
+  const mainTop = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 0.9), woodMat)
   mainTop.position.set(0, 0.74, 0)
   mainTop.castShadow = true
   if (options.entityId) mainTop.userData = { entityId: options.entityId }
-  group.add(mainTop)
+  placeholderGroup.add(mainTop)
+  group.add(placeholderGroup)
 
-  // Solid Pedestal Bases
-  const baseLGeo = new THREE.BoxGeometry(0.3, 0.7, 0.8)
-  const baseL = new THREE.Mesh(baseLGeo, woodMat)
-  baseL.position.set(-0.85, 0.35, 0)
-  baseL.castShadow = true
-  if (options.entityId) baseL.userData = { entityId: options.entityId }
-  group.add(baseL)
+  const loader = ModelLoader.getInstance()
+  void Promise.allSettled([
+    loader.load('furniture:deskCorner'),
+    loader.load('furniture:chairDesk'),
+  ]).then(([deskRes, chairRes]) => {
+    if (deskRes.status === 'fulfilled') {
+      placeholderGroup.visible = false
+      const deskCorner = deskRes.value
+      deskCorner.scale.set(2.4, 2.0, 2.4)
+      deskCorner.position.set(-1.0, 0, 0.7)
+      deskCorner.traverse((node) => {
+        if (options.entityId) node.userData = { entityId: options.entityId }
+      })
+      modelsContainer.add(deskCorner)
 
-  const baseR = baseL.clone()
-  baseR.position.set(0.85, 0.35, 0)
-  group.add(baseR)
-
-  // High-back Executive Leather Chair
-  const chair = new THREE.Group()
-  chair.position.set(0, 0, 0.65)
-  if (options.entityId) chair.userData = { entityId: options.entityId }
-
-  const seatGeo = new THREE.BoxGeometry(0.58, 0.1, 0.54)
-  const seat = new THREE.Mesh(seatGeo, chairMat)
-  seat.position.set(0, 0.48, 0)
-  if (options.entityId) seat.userData = { entityId: options.entityId }
-  chair.add(seat)
-
-  const backGeo = new THREE.BoxGeometry(0.56, 0.8, 0.08)
-  const back = new THREE.Mesh(backGeo, chairMat)
-  back.position.set(0, 0.88, 0.22)
-  back.rotation.x = -0.1
-  if (options.entityId) back.userData = { entityId: options.entityId }
-  chair.add(back)
-
-  group.add(chair)
+      if (chairRes.status === 'fulfilled') {
+        const execChair = chairRes.value
+        execChair.scale.set(2.5, 2.5, 2.5)
+        execChair.position.set(-0.35, 0, 0.8)
+        execChair.rotation.y = Math.PI
+        execChair.traverse((node) => {
+          if (options.entityId) node.userData = { entityId: options.entityId }
+        })
+        modelsContainer.add(execChair)
+      }
+    }
+  })
 
   // Executive Curved Ultrawide Display
   const screenGeo = new THREE.BoxGeometry(1.1, 0.45, 0.04)
@@ -287,30 +288,15 @@ export function createConferenceTable(materials: MaterialPalette): THREE.Group {
   shadow.position.set(0, 0.003, 0)
   group.add(shadow)
 
-  // Large Conference Table (4.5m x 1.6m)
-  const tableGeo = new THREE.BoxGeometry(4.5, 0.08, 1.6)
-  const table = new THREE.Mesh(tableGeo, woodMat)
-  table.position.set(0, 0.74, 0)
-  table.castShadow = true
-  table.receiveShadow = true
-  group.add(table)
+  // Real 3D Conference Table
+  const modelsContainer = new THREE.Group()
+  group.add(modelsContainer)
 
-  // Center cable tray
-  const trayGeo = new THREE.BoxGeometry(2.0, 0.01, 0.2)
-  const trayMat = materials.getFrameMaterial('#0f172a')
-  const tray = new THREE.Mesh(trayGeo, trayMat)
-  tray.position.set(0, 0.785, 0)
-  group.add(tray)
-
-  // Heavy pillars
-  const pillarGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.7, 16)
-  const p1 = new THREE.Mesh(pillarGeo, legMat)
-  p1.position.set(-1.4, 0.35, 0)
-  group.add(p1)
-
-  const p2 = new THREE.Mesh(pillarGeo, legMat)
-  p2.position.set(1.4, 0.35, 0)
-  group.add(p2)
+  const placeholder = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.08, 1.6), woodMat)
+  placeholder.position.set(0, 0.74, 0)
+  placeholder.castShadow = true
+  placeholder.receiveShadow = true
+  group.add(placeholder)
 
   // Surround chairs
   const addChair = (x: number, z: number, rotY: number) => {
@@ -343,6 +329,16 @@ export function createConferenceTable(materials: MaterialPalette): THREE.Group {
   // Heads
   addChair(-2.55, 0, Math.PI / 2)
   addChair(2.55, 0, -Math.PI / 2)
+
+  // Heavy pillars
+  const pillarGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.7, 16)
+  const p1 = new THREE.Mesh(pillarGeo, legMat)
+  p1.position.set(-1.4, 0.35, 0)
+  group.add(p1)
+
+  const p2 = new THREE.Mesh(pillarGeo, legMat)
+  p2.position.set(1.4, 0.35, 0)
+  group.add(p2)
 
   return group
 }
