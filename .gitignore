@@ -1,0 +1,17 @@
+node_modules/
+package-lock.json
+dist/
+dist-ssr/
+build/
+.vite/
+*.tsbuildinfo
+*.local
+.env
+.env.*
+!.env.example
+logs/
+*.log
+npm-debug.log*
+.DS_Store
+.cache/
+.eslintcache

@@ -1,0 +1,190 @@
+/* @umituz/web-virtual Stylesheet */
+
+.wv-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0f172a;
+  user-select: none;
+}
+
+.wv-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Floating Pins Overlay */
+.wv-pins-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wv-pin-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+  will-change: transform;
+  transform-origin: center bottom;
+  transform: translate3d(-9999px, -9999px, 0);
+  transition: opacity 0.15s ease-out;
+}
+
+.wv-pin-chip {
+  position: relative;
+  transform: translate(-50%, -100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.wv-pin-chip:hover {
+  transform: translate(-50%, -100%) scale(1.08);
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  z-index: 50;
+}
+
+.wv-pin-chip.is-selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4), 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.wv-pin-circle {
+  position: relative;
+  transform: translate(-50%, -100%);
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e293b;
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.15s ease;
+}
+
+.wv-pin-circle:hover {
+  transform: translate(-50%, -100%) scale(1.15);
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  z-index: 50;
+}
+
+.wv-pin-circle.is-selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.45);
+}
+
+.wv-status-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.wv-status-pip.idle {
+  background-color: #22c55e;
+}
+
+.wv-status-pip.running,
+.wv-status-pip.working {
+  background-color: #3b82f6;
+  box-shadow: 0 0 6px #3b82f6;
+  animation: wv-pulse 1.4s infinite ease-in-out;
+}
+
+.wv-status-pip.awaiting_approval {
+  background-color: #f59e0b;
+}
+
+.wv-status-pip.failed {
+  background-color: #ef4444;
+}
+
+.wv-status-pip.offline {
+  background-color: #94a3b8;
+}
+
+@keyframes wv-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.75; }
+}
+
+/* Floating Controls Toolbar */
+.wv-controls-toolbar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 40;
+}
+
+.wv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  color: #cbd5e1;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wv-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.wv-btn.is-active {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.wv-btn-icon {
+  width: 32px;
+  padding: 0;
+}
+
+.wv-divider {
+  width: 1px;
+  height: 18px;
+  background-color: rgba(255, 255, 255, 0.15);
+  margin: 0 2px;
+}
