@@ -25,6 +25,7 @@ Entities without an explicit `position` are auto-placed onto preset slots — by
 
 - **Universal Engine**: Agnostic to domain (Corporate Offices, Agriculture, Automation Factories, Campus, Healthcare).
 - **Engine Tick Animations (2.1.0)**: Register per-frame scene motion (`registerTick`) on the engine's own render loop — wind sway, water ripples, spinning wheels, grazing herds. No separate `requestAnimationFrame` needed; pauses with the tab, cleared on dispose.
+- **Standalone World Page Shell (2.2.0)**: `VirtualWorldPage` — the full-screen chrome every data-driven world needs (header with back/title/meta + label, night, top-view & reset actions; selected-entity card; hint pill; sectioned sidebar rows that focus entities; optional footer). All strings arrive via the `labels` prop (i18n stays yours), all theming via `--wv-page-*` CSS custom properties. Ships with `createTickBinder()` (bind/queue bridge for the engine tick), `useStableSnapshot()` (freeze the first world build per visit so refetches never steal the camera) and `isNightHour()` (local-hour night default).
 - **Nature / Farm / Animal Builders (2.1.0)**: Procedural, config-driven `createCropPlot` (growth 0–1), `createTree`/`createTreeRow` (+`applyWindSway`), `createFence`, `createPond`, `createAnimal`/`createHerd` (cow/sheep/goat/chicken), `createTractor`, plus farm architecture (barn, silo, greenhouse, machine shed, coop).
 - **Hot-Synced Entities (1.2.0)**: When the `world` prop changes (e.g. a status poll), entities are diffed and updated **in place** — the scene, camera position, lights and cached GLB models are never rebuilt. No flicker, no reloads, no lost camera angle.
 - **WebGL Resilience (1.2.0)**: Graceful fallback UI when WebGL is unavailable, and a one-click restore overlay if the GPU context is lost mid-session.
@@ -115,6 +116,58 @@ const onReady = (ref: VirtualWorldRef) =>
     myMesh.rotation.y = elapsed * 0.4
   })
 ```
+
+### Standalone world page (2.2.0)
+
+`VirtualWorldPage` wraps a `VirtualWorld` with the whole page — hand it data,
+labels and two render slots; it owns pinMode/night/selection state, the focus
+wiring and the responsive layout:
+
+```tsx
+import { VirtualWorldPage, createEnvironment } from '@umituz/web-virtual'
+import '@umituz/web-virtual/styles.css'
+
+<VirtualWorldPage
+  world={world}
+  preset={myPreset}
+  title="Club Aria"
+  meta={`${liveCount} live · ${personaCount} co-hosts`}
+  back={<Link to="/discover">Discover</Link>}
+  initialNight="auto"        // local-hour day/night; 'nightToggle' adds the button
+  selectedAlign="start"      // or 'center'
+  hint="Click a stage to watch · drag to orbit · scroll to zoom"
+  sections={[
+    { key: 'live', heading: 'Now live', rows: liveRows },
+    { key: 'vips', heading: 'VIP lofts', rows: vipRows }, // rows: {id, label, meta?, dotColor?, dashed?}
+  ]}
+  labels={{ topView: 'Üst görünüm', resetView: 'Sıfırla' }}  // your i18n
+  renderOpenLink={(entity) => <Link to={`/x/${entity.id}`}>Open</Link>}
+  footer="Click a stage to watch its stream"
+/>
+```
+
+Theme it from consumer CSS by overriding the custom properties (dark clubs,
+paper-white farms — same shell):
+
+```css
+.club {
+  --wv-page-bg: #0b0b0f;
+  --wv-page-surface: #111827;
+  --wv-page-fg: #e8edf8;
+  --wv-page-muted: #8b93a7;
+  --wv-page-line: #27334a;
+  --wv-page-accent: #7c3aed;
+  --wv-page-accent-soft: rgba(124, 58, 237, 0.14);
+}
+```
+
+Companion utilities:
+
+| Export | What it does |
+| --- | --- |
+| `createTickBinder()` | Module-scoped bind/queue bridge for `registerTick` — animations registered before the engine mounts flush on the next bind |
+| `useStableSnapshot(fresh)` | Freezes the first non-null value per visit (world builds) so background refetches never rebuild the scene |
+| `isNightHour(from?, to?)` | Local-hour night check (wraps midnight) for `initialNight="auto"` |
 
 ### Procedural nature / farm builders (2.1.0)
 
