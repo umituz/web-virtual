@@ -96,7 +96,7 @@ describe('Environment Factory & Presets', () => {
   it('keeps farm and factory presets slot-based and occupant-free', () => {
     const farm = createEnvironment({ preset: farmPreset, name: 'Agromera Farm' })
     expect(farm.type).toBe('farm')
-    expect(farm.zones.length).toBe(3)
+    expect(farm.zones.length).toBe(5)
     expect(farm.entities).toEqual([])
 
     const factory = createEnvironment({ preset: factoryPreset, name: 'Auto Plant 4' })

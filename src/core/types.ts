@@ -1,5 +1,17 @@
 export type Vector3Tuple = [number, number, number]
 
+/**
+ * Per-frame animation callback stepped by the engine's own render loop.
+ * Receives the frame delta (seconds) and total elapsed time (seconds).
+ * Registered callbacks pause with the tab (battery-aware) and are cleared
+ * automatically when the engine is disposed — consumers never need their
+ * own requestAnimationFrame loop for scene motion.
+ */
+export type WorldTickFn = (delta: number, elapsed: number) => void
+
+/** Unregister function returned by tick registration. */
+export type UnregisterTick = () => void
+
 export type EntityType =
   | 'person'
   | 'actor'
@@ -191,6 +203,17 @@ export interface DepartmentInfo {
   iconName?: 'briefcase' | 'palette' | 'megaphone' | 'shield' | 'globe'
 }
 
+/** Options handed to a preset's `buildScene` when the engine builds the world. */
+export interface BuildSceneOptions {
+  nightMode?: boolean
+  theme?: WorldTheme
+  /**
+   * Engine per-frame hook — register scene animations here (wind sway, water
+   * ripples, machine motion…) instead of running a separate rAF loop.
+   */
+  registerTick?: (fn: WorldTickFn) => UnregisterTick
+}
+
 export interface WorldPreset {
   id: string
   name: string
@@ -209,7 +232,7 @@ export interface WorldPreset {
   slots?: WorldSlot[]
   /** Optional demo occupants — shipped presets deliberately leave this empty. */
   defaultEntities?: EntityDraft[]
-  buildScene?: (scene: import('three').Scene, options: { nightMode?: boolean; theme?: WorldTheme }) => void
+  buildScene?: (scene: import('three').Scene, options: BuildSceneOptions) => void
 }
 
 export type PinDisplayMode = 'pins' | 'labels' | 'off'

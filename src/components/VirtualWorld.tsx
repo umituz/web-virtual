@@ -14,6 +14,8 @@ import type {
   WorldEntity,
   WorldPreset,
   PinDisplayMode,
+  WorldTickFn,
+  UnregisterTick,
 } from '../core/types'
 import { WorldEngine } from '../engine/renderer'
 import { createStylizedAvatar, type CreatedAvatar } from '../entities/people/AvatarBuilder'
@@ -28,6 +30,11 @@ export interface VirtualWorldRef {
   resetCamera: () => void
   setNightMode: (isNight: boolean) => void
   resize: () => void
+  /**
+   * Register a per-frame animation stepped by the engine's render loop —
+   * no separate requestAnimationFrame loop needed on the consumer side.
+   */
+  registerTick: (fn: WorldTickFn) => UnregisterTick
 }
 
 export interface VirtualWorldProps {
@@ -177,6 +184,7 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
         activePreset.buildScene(engine.scene, {
           nightMode: nightModeRef.current,
           theme: worldRef.current.theme,
+          registerTick: engine.registerTick.bind(engine),
         })
       }
 
@@ -330,6 +338,12 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
             const { clientWidth, clientHeight } = containerRef.current
             engineRef.current.resize(clientWidth, clientHeight)
           }
+        },
+        registerTick: (fn: WorldTickFn) => {
+          if (engineRef.current) {
+            return engineRef.current.registerTick(fn)
+          }
+          return () => {}
         },
       }),
       [],

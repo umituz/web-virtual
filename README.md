@@ -24,6 +24,8 @@ Entities without an explicit `position` are auto-placed onto preset slots — by
 ## Features
 
 - **Universal Engine**: Agnostic to domain (Corporate Offices, Agriculture, Automation Factories, Campus, Healthcare).
+- **Engine Tick Animations (2.1.0)**: Register per-frame scene motion (`registerTick`) on the engine's own render loop — wind sway, water ripples, spinning wheels, grazing herds. No separate `requestAnimationFrame` needed; pauses with the tab, cleared on dispose.
+- **Nature / Farm / Animal Builders (2.1.0)**: Procedural, config-driven `createCropPlot` (growth 0–1), `createTree`/`createTreeRow` (+`applyWindSway`), `createFence`, `createPond`, `createAnimal`/`createHerd` (cow/sheep/goat/chicken), `createTractor`, plus farm architecture (barn, silo, greenhouse, machine shed, coop).
 - **Hot-Synced Entities (1.2.0)**: When the `world` prop changes (e.g. a status poll), entities are diffed and updated **in place** — the scene, camera position, lights and cached GLB models are never rebuilt. No flicker, no reloads, no lost camera angle.
 - **WebGL Resilience (1.2.0)**: Graceful fallback UI when WebGL is unavailable, and a one-click restore overlay if the GPU context is lost mid-session.
 - **Battery Friendly (1.2.0)**: The render loop pauses automatically while the tab is hidden.
@@ -31,7 +33,7 @@ Entities without an explicit `position` are auto-placed onto preset slots — by
 - **Interactive Entities & Raycasting**: Click and hover directly on 3D desks, monitors, robots, or avatars.
 - **Architectural Presets** (occupant-free — slots only):
   - `officePreset`: 17-desk architectural floorplan with executive suite, meeting room, and glass partitions (`OFFICE_SLOTS`).
-  - `farmPreset`: Greenhouses, crops, barns, tractors (`FARM_SLOTS`).
+  - `farmPreset`: Staged crop plots, greenhouse benches, fenced pasture with animated herds, a rippling pond, barn + silo, machinery yard and poultry run (`FARM_SLOTS`).
   - `factoryPreset`: Conveyor belts, robotic arms, storage racks (`FACTORY_SLOTS`).
   - `schoolPreset`: Lecture halls, interactive smartboards, science labs (`SCHOOL_SLOTS`).
   - `hospitalPreset`: Triage rooms, consultation suites, patient monitoring (`HOSPITAL_SLOTS`).
@@ -88,6 +90,47 @@ const world = useMemo(
 
 return <VirtualWorld world={world} preset={officePreset} />
 ```
+
+### Scene animations on the engine loop (2.1.0)
+
+`buildScene` receives a `registerTick` hook — register any per-frame motion
+there and the engine steps it inside its own loop (tab-hidden pause and
+dispose cleanup included). The same hook is available on the component ref:
+
+```tsx
+import type { WorldPreset } from '@umituz/web-virtual'
+
+const myPreset: WorldPreset = {
+  /* …camera, lighting, theme, zones… */
+  buildScene: (scene, { registerTick }) => {
+    const herd = createHerd({ species: 'cow', count: 6, registerTick })
+    scene.add(herd)
+    applyWindSway(treeRow, registerTick, { intensity: 0.03 })
+  },
+}
+
+// Or from the page:
+const onReady = (ref: VirtualWorldRef) =>
+  ref.registerTick((_delta, elapsed) => {
+    myMesh.rotation.y = elapsed * 0.4
+  })
+```
+
+### Procedural nature / farm builders (2.1.0)
+
+All builders are pure config — no domain data, no fetching, nothing
+project-specific:
+
+| Builder | What it makes |
+| --- | --- |
+| `createCropPlot({ growth, rows, cropColor })` | Raised soil bed + instanced crop rows; `growth` 0→1 scales height and density |
+| `createTree({ shape, season })` / `createTreeRow` | Low-poly trees (round/broad/conifer, spring→winter) |
+| `applyWindSway(target, registerTick)` | Sine sway for foliage (or any group) |
+| `createFence({ points })` | Ranch/picket fence along a polyline |
+| `createPond({ radius, registerTick })` | Water disc with looping ripple rings |
+| `createAnimal` / `createHerd` | Cow, sheep, goat, chicken — deterministic scatter, grazing animation |
+| `createTractor({ status, implement })` | Wheels spin and engine shivers when `status: 'running'` |
+| `createBarn`, `createSilo`, `createGreenhouse`, `createMachineShed`, `createCoop` | Farm architecture — every piece optional and parameterized |
 
 ### Your occupants, your language (any preset)
 

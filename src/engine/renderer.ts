@@ -1,5 +1,11 @@
 import * as THREE from 'three'
-import type { WorldDefinition, WorldEntity, EntitySelectedEvent } from '../core/types'
+import type {
+  WorldDefinition,
+  WorldEntity,
+  EntitySelectedEvent,
+  WorldTickFn,
+  UnregisterTick,
+} from '../core/types'
 import { MaterialPalette } from './materials'
 import { WorldLighting } from './lighting'
 import { WorldCamera, type CameraPresetName } from './camera'
@@ -28,6 +34,9 @@ export class WorldEngine {
 
   public interactiveObjects: THREE.Object3D[] = []
   public animators: Array<(delta: number, elapsed: number) => void> = []
+
+  /** Consumer-registered per-frame callbacks (wind, water, machinery…). */
+  private ticks = new Set<WorldTickFn>()
 
   private isDisposed = false
   private animationFrameId: number | null = null
@@ -76,6 +85,18 @@ export class WorldEngine {
    */
   public updateWorld(world: WorldDefinition): void {
     this.options.world = world
+  }
+
+  /**
+   * Register a per-frame animation callback stepped inside the engine's own
+   * render loop. Callbacks pause with the document (battery-aware) and are
+   * cleared when the engine is disposed. Returns an unregister function.
+   */
+  public registerTick(fn: WorldTickFn): UnregisterTick {
+    this.ticks.add(fn)
+    return () => {
+      this.ticks.delete(fn)
+    }
   }
 
   /** Pause rendering while the tab is hidden to save battery/CPU. */
@@ -232,6 +253,13 @@ export class WorldEngine {
         animator(delta, elapsed)
       }
 
+      // Step consumer-registered scene animations (wind, water, machinery…)
+      if (this.ticks.size > 0) {
+        for (const tick of this.ticks) {
+          tick(delta, elapsed)
+        }
+      }
+
       // Render Three.js scene
       this.renderer.render(this.scene, this.cameraSystem.camera)
 
@@ -269,6 +297,7 @@ export class WorldEngine {
   public dispose(): void {
     this.isDisposed = true
     this.stopLoop()
+    this.ticks.clear()
     if (this.visibilityHandler) {
       document.removeEventListener('visibilitychange', this.visibilityHandler)
       this.visibilityHandler = null
