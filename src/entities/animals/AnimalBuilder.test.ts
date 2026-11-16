@@ -3,11 +3,22 @@ import * as THREE from 'three'
 import { createAnimal, createHerd } from './AnimalBuilder'
 
 describe('createAnimal', () => {
-  it.each(['cow', 'sheep', 'goat', 'chicken'] as const)('builds a %s with a head pivot', (species) => {
+  it.each(
+    [
+      'cow', 'buffalo', 'sheep', 'goat', 'horse', 'pig', 'rabbit',
+      'chicken', 'turkey', 'quail', 'duck', 'goose',
+    ] as const,
+  )('builds a %s with a head pivot', (species) => {
     const animal = createAnimal({ species })
     expect(animal.getObjectByName('animal-neck')).toBeTruthy()
     expect(animal.getObjectByName('animal-head')).toBeTruthy()
     expect(animal.children.length).toBeGreaterThan(3)
+  })
+
+  it('falls back to the cow silhouette for an unknown species instead of crashing', () => {
+    const junk = createAnimal({ species: 'space-whale' as never })
+    expect(junk.getObjectByName('animal-head')).toBeTruthy()
+    expect(junk.name).toBe('animal-space-whale')
   })
 
   it('scales uniformly', () => {
@@ -19,6 +30,14 @@ describe('createAnimal', () => {
 })
 
 describe('createHerd', () => {
+  it('never crashes a scene build on an unknown species (regression: live farm crash)', () => {
+    const herd = createHerd({ species: 'emu' as never, count: 3 })
+    expect(herd.children).toHaveLength(3)
+    for (const child of herd.children) {
+      expect(child.getObjectByName('animal-head')).toBeTruthy()
+    }
+  })
+
   it('creates exactly count animals inside the grazing area', () => {
     const herd = createHerd({ species: 'cow', count: 9, area: { width: 8, depth: 6 }, center: [3, 0, 4] })
     const animals = herd.children.filter((c) => c.name === 'animal-cow')
