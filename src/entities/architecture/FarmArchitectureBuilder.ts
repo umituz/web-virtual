@@ -147,7 +147,8 @@ export function createGreenhouse(options: GreenhouseOptions = {}): THREE.Group {
   const {
     width = 9,
     depth = 6,
-    height = 2.8,
+    // `height` is accepted for API symmetry — the vault derives from depth.
+    height: _height = 2.8,
     frameColor = '#e8eaed',
     glassColor = '#cdebdd',
     glassOpacity = 0.3,
@@ -156,6 +157,7 @@ export function createGreenhouse(options: GreenhouseOptions = {}): THREE.Group {
     benches,
     entityId,
   } = options
+  void _height
 
   const group = new THREE.Group()
   group.name = 'greenhouse'

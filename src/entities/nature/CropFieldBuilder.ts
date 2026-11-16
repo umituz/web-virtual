@@ -67,7 +67,6 @@ export function createCropPlot(options: CropPlotOptions = {}): THREE.Group {
   const rowCount = Math.max(1, Math.round(rows * (0.35 + 0.65 * g)))
 
   const rowAxis = rowDirection === 'x' ? 'x' : 'z'
-  const crossAxis = rowAxis === 'x' ? 'z' : 'x'
   const rowLength = rowAxis === 'x' ? width : depth
   const crossLength = rowAxis === 'x' ? depth : width
 
