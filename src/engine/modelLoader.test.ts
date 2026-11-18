@@ -76,4 +76,18 @@ describe('rebindSkinnedSkeletons', () => {
     const cloneMesh = clone.getObjectByName('body-mesh') as THREE.SkinnedMesh
     expect(cloneMesh.skeleton).toBe(skeleton)
   })
+
+  it('preserves animation clips when cloning rigged groups', () => {
+    const { root } = makeRiggedGroup()
+    const clip = new THREE.AnimationClip('sit', 1.0, [
+      new THREE.VectorKeyframeTrack('root.position', [0, 1], [0, 0, 0, 0, -0.15, 0]),
+    ])
+    root.animations = [clip]
+
+    // Clone and verify animations are retained
+    const clone = root.clone(true)
+    clone.animations = root.animations ? [...root.animations] : []
+    expect(clone.animations).toHaveLength(1)
+    expect(clone.animations?.[0]?.name).toBe('sit')
+  })
 })

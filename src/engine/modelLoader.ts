@@ -72,6 +72,8 @@ export class ModelLoader {
         resolvedPath,
         (gltf) => {
           const root = gltf.scene
+          // Preserve animation clips on the scene root for AnimationMixer consumers
+          root.animations = gltf.animations || []
 
           // Configure shadows and PBR properties across all child meshes
           root.traverse((node) => {
@@ -121,11 +123,20 @@ export class ModelLoader {
     await Promise.all(assetIds.map((id) => this.load(id)))
   }
 
+  getAnimations(assetIdOrPath: string): THREE.AnimationClip[] {
+    const meta: AssetMetadata | undefined = ASSET_CATALOG[assetIdOrPath]
+    const rawPath = meta ? meta.path : assetIdOrPath
+    const resolvedPath = this.basePath ? `${this.basePath}${rawPath}` : rawPath
+    return this.cache.get(resolvedPath)?.animations || []
+  }
+
   private cloneGroup(source: THREE.Group, meta?: AssetMetadata): THREE.Group {
     const cloned = source.clone(true)
     // Skinned meshes cannot share a skeleton across clones — rebind each
     // clone to the bones inside its own hierarchy (see rebindSkinnedSkeletons).
     rebindSkinnedSkeletons(cloned)
+    // Preserve animation clips on cloned hierarchies for THREE.AnimationMixer
+    cloned.animations = source.animations ? [...source.animations] : []
     if (meta && meta.defaultScale) {
       if (typeof meta.defaultScale === 'number') {
         cloned.scale.setScalar(meta.defaultScale)
