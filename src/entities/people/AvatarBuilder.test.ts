@@ -72,4 +72,16 @@ describe('createStylizedAvatar hot-sync', () => {
     update({ ...baseEntity, status: 'idle' })
     expect(halo.material).toBe(materialBefore)
   })
+
+  it('configures standing posture when pose is standing', () => {
+    const materials = new MaterialPalette()
+    const standingEntity: WorldEntity = {
+      ...baseEntity,
+      id: 'standing-1',
+      metadata: { pose: 'standing' },
+    }
+    const { group } = createStylizedAvatar(standingEntity, materials)
+    const halo = findStatusHalo(group)
+    expect(halo.position.y).toBe(2.1)
+  })
 })
