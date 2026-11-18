@@ -1,4 +1,5 @@
 export * from './people/AvatarBuilder'
+export * from './people/CrowdBuilder'
 export * from './furniture/DeskBuilder'
 export * from './architecture/OfficeArchitectureBuilder'
 export * from './architecture/FarmArchitectureBuilder'

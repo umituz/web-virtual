@@ -64,7 +64,7 @@ export function createModernWorkstation(
   placeholderGroup.add(rightLeg)
 
   const chairSeat = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.46), chairMat)
-  chairSeat.position.set(0, 0.46, 0.48)
+  chairSeat.position.set(0, 0.46, 0.68)
   chairSeat.castShadow = true
   if (options.entityId) chairSeat.userData = { entityId: options.entityId }
   placeholderGroup.add(chairSeat)
@@ -102,10 +102,10 @@ export function createModernWorkstation(
       })
       modelsContainer.add(deskModel)
 
-      // Real Chair
+      // Real Chair (centered facing desk at x = 0, z = 0.50)
       if (chairModel) {
         chairModel.scale.set(2.2, 2.2, 2.2)
-        chairModel.position.set(-0.35, 0, 0.65)
+        chairModel.position.set(0.368, 0, 0.50)
         chairModel.rotation.y = Math.PI
         chairModel.traverse((node) => {
           if (options.entityId) node.userData = { entityId: options.entityId }
@@ -245,7 +245,8 @@ export function createExecutiveDesk(
       if (chairRes.status === 'fulfilled') {
         const execChair = chairRes.value
         execChair.scale.set(2.5, 2.5, 2.5)
-        execChair.position.set(-0.35, 0, 0.8)
+        // Center executive chair at x = 0 (chair width 0.837, so x = 0.418 centers it)
+        execChair.position.set(0.418, 0, 0.65)
         execChair.rotation.y = Math.PI
         execChair.traverse((node) => {
           if (options.entityId) node.userData = { entityId: options.entityId }

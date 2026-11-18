@@ -31,20 +31,22 @@ export function createStylizedAvatar(
   // Posture determination: Seated at a desk by default, or standing if specified
   const isSeated = entity.metadata?.seated !== false && entity.metadata?.pose !== 'standing'
   const isExecutive = isSeated && (entity.id === 'slot-1' || entity.zoneId === 'executive')
-  const seatZ = isSeated ? (isExecutive ? 0.62 : 0.44) : 0
 
-  // Root avatar container positioned at the chair or origin
+  // Align seatZ precisely with the chair seat cushion center (standard desk: 0.68, executive desk: 0.80)
+  const seatZ = isSeated ? (isExecutive ? 0.80 : 0.68) : 0
+
+  // Root avatar container positioned at the chair cushion center or ground origin
   const avatarRoot = new THREE.Group()
   avatarRoot.position.set(0, 0, seatZ)
   group.add(avatarRoot)
 
-  // 1. Invisible Click Raycast Proxy (ensures easy clicking)
-  const clickProxyHeight = isSeated ? 1.6 : 1.9
+  // 1. Invisible Click Raycast Proxy (ensures responsive clicking on the character)
+  const clickProxyHeight = isSeated ? 1.5 : 1.9
   const clickProxyY = isSeated ? 0.8 : 0.95
-  const clickProxyGeo = new THREE.CylinderGeometry(0.55, 0.55, clickProxyHeight, 8)
+  const clickProxyGeo = new THREE.CylinderGeometry(0.5, 0.5, clickProxyHeight, 8)
   const clickProxyMat = new THREE.MeshBasicMaterial({ visible: false })
   const clickProxy = new THREE.Mesh(clickProxyGeo, clickProxyMat)
-  clickProxy.position.set(0, clickProxyY, isSeated ? -0.1 : 0)
+  clickProxy.position.set(0, clickProxyY, 0)
   clickProxy.userData = { entityId: entity.id }
   avatarRoot.add(clickProxy)
 
@@ -54,7 +56,7 @@ export function createStylizedAvatar(
   avatarRoot.add(modelsContainer)
 
   // 3. Floating Status Pin Indicator (Compact, elegant glow disk)
-  const haloY = isSeated ? 1.7 : 2.1
+  const haloY = isSeated ? 1.75 : 2.1
   const statusHalo = new THREE.Mesh(
     new THREE.RingGeometry(0.07, 0.11, 24),
     statusMat,
@@ -85,27 +87,41 @@ export function createStylizedAvatar(
 
   function syncAnimationActions() {
     if (!mixer) return
+
     if (isSeated) {
+      // 1. Lower body sitting pose (always active when seated)
+      if (sitAction && !sitAction.isRunning()) {
+        sitAction.reset().fadeIn(0.2).play()
+      }
+
+      // 2. Upper body active lifecycle (breathing idle vs active typing vs nodding approval)
       if (isWorking) {
         if (emoteAction) emoteAction.fadeOut(0.2)
-        if (interactAction) {
+        if (idleAction) idleAction.fadeOut(0.2)
+        if (interactAction && !interactAction.isRunning()) {
           interactAction.reset().fadeIn(0.2).play()
         }
       } else if (isAwaiting) {
         if (interactAction) interactAction.fadeOut(0.2)
-        if (emoteAction) {
+        if (idleAction) idleAction.fadeOut(0.2)
+        if (emoteAction && !emoteAction.isRunning()) {
           emoteAction.reset().fadeIn(0.2).play()
         }
       } else {
+        // Idle state: actively breathe, sway, and observe surroundings
         if (interactAction) interactAction.fadeOut(0.2)
         if (emoteAction) emoteAction.fadeOut(0.2)
-        if (sitAction && !sitAction.isRunning()) {
-          sitAction.reset().fadeIn(0.2).play()
+        if (idleAction && !idleAction.isRunning()) {
+          idleAction.reset().fadeIn(0.2).play()
         }
       }
     } else {
+      // Standing posture
+      if (sitAction) sitAction.stop()
+
       if (isWorking) {
         if (emoteAction) emoteAction.fadeOut(0.2)
+        if (idleAction) idleAction.fadeOut(0.2)
         if (walkAction) {
           walkAction.reset().fadeIn(0.2).play()
         } else if (interactAction) {
@@ -114,6 +130,7 @@ export function createStylizedAvatar(
       } else if (isAwaiting) {
         if (walkAction) walkAction.fadeOut(0.2)
         if (interactAction) interactAction.fadeOut(0.2)
+        if (idleAction) idleAction.fadeOut(0.2)
         if (emoteAction) {
           emoteAction.reset().fadeIn(0.2).play()
         }
@@ -133,9 +150,12 @@ export function createStylizedAvatar(
   void loader.load(selectedCharId).then((charModel) => {
     if (!charModel) return
 
-    // Scale and position character
+    // Scale and position character directly on the chair cushion
     charModel.scale.set(1.65, 1.65, 1.65)
-    charModel.position.set(0, isSeated ? 0.44 : 0, isSeated ? -0.05 : 0)
+    charModel.position.set(0, isSeated ? 0.44 : 0, 0)
+    // Seated character faces the desk and computer monitors (towards negative z)
+    charModel.rotation.y = isSeated ? Math.PI : 0
+
     charModel.traverse((node) => {
       if (node instanceof THREE.Mesh) {
         node.castShadow = true
@@ -153,26 +173,30 @@ export function createStylizedAvatar(
       if (sitClip) {
         sitAction = mixer.clipAction(sitClip)
         sitAction.setLoop(THREE.LoopRepeat, Infinity)
-        if (isSeated) sitAction.play()
       }
 
       const idleClip = THREE.AnimationClip.findByName(animations, 'idle')
       if (idleClip) {
         idleAction = mixer.clipAction(idleClip)
         idleAction.setLoop(THREE.LoopRepeat, Infinity)
-        if (!isSeated) idleAction.play()
+        // Desynchronize start time and add slight natural human speed variance
+        idleAction.time = (seed * 1.7) % idleClip.duration
+        idleAction.timeScale = 0.88 + ((pinNum % 5) * 0.05)
       }
 
       const walkClip = THREE.AnimationClip.findByName(animations, 'walk')
       if (walkClip) {
         walkAction = mixer.clipAction(walkClip)
         walkAction.setLoop(THREE.LoopRepeat, Infinity)
+        walkAction.time = (seed * 1.1) % walkClip.duration
       }
 
       const interactClip = THREE.AnimationClip.findByName(animations, 'interact-right')
       if (interactClip) {
         interactAction = mixer.clipAction(interactClip)
         interactAction.setLoop(THREE.LoopRepeat, Infinity)
+        interactAction.time = (seed * 0.9) % interactClip.duration
+        interactAction.timeScale = 0.92 + ((pinNum % 4) * 0.05)
       }
 
       const emoteClip = THREE.AnimationClip.findByName(animations, 'emote-yes')
@@ -189,7 +213,7 @@ export function createStylizedAvatar(
 
   // 5. Standard Three.js Render Step
   const animate = (delta: number, elapsed: number) => {
-    // A. Advance Three.js AnimationMixer
+    // A. Advance Three.js AnimationMixer (breathing, typing, walking)
     if (mixer) {
       mixer.update(delta)
     }
