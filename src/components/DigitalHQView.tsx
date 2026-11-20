@@ -153,12 +153,9 @@ export function DigitalHQView({
   )
 
   const handleToggleRoster = useCallback(() => {
-    setShowRoster((prev) => {
-      const next = !prev
-      setTimeout(() => virtualWorldRef.current?.resize(), 50)
-      return next
-    })
-  }, [])
+    setShowRoster(!showRoster)
+    setTimeout(() => virtualWorldRef.current?.resize(), 50)
+  }, [showRoster])
 
   const handleToggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {

@@ -2,8 +2,10 @@ import type { WorldEntity, EntitySelectedEvent } from './types'
 
 export type VirtualEventListener<T> = (data: T) => void
 
+type StoredEventListener = (data: never) => void
+
 export class VirtualEventEmitter {
-  private listeners: Map<string, Set<VirtualEventListener<any>>> = new Map()
+  private listeners: Map<string, Set<StoredEventListener>> = new Map()
 
   on<T>(event: string, listener: VirtualEventListener<T>): () => void {
     if (!this.listeners.has(event)) {
@@ -28,7 +30,7 @@ export class VirtualEventEmitter {
     if (set) {
       for (const listener of set) {
         try {
-          listener(data)
+          listener(data as never)
         } catch (err) {
           console.error(`[web-virtual] Error in event listener for "${event}":`, err)
         }

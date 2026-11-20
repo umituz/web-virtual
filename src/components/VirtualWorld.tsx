@@ -110,8 +110,10 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
 
     const nightMode = externalNightMode !== undefined ? externalNightMode : internalNightMode
     const pinMode = externalPinMode !== undefined ? externalPinMode : internalPinMode
-    nightModeRef.current = nightMode
-    worldRef.current = world
+    useEffect(() => {
+      nightModeRef.current = nightMode
+      worldRef.current = world
+    })
 
     // Determine active selected entity (controlled or uncontrolled)
     const activeEntity =
@@ -177,6 +179,7 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       engineRef.current = engine
       setWebglFailed(false)
       setContextLost(false)
+      const avatarRegistry = avatarRegistryRef.current
 
       // 1. Build environment from preset or custom scene builder
       const activePreset = preset
@@ -217,7 +220,7 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
 
       return () => {
         resizeObserver.disconnect()
-        avatarRegistryRef.current.clear()
+        avatarRegistry.clear()
         avatarGroupRef.current = null
         staticInteractivesRef.current = []
         engine.dispose()

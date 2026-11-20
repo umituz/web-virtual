@@ -1,6 +1,6 @@
 {
   "name": "@umituz/web-virtual",
-  "version": "2.3.3",
+  "version": "2.4.0",
   "description": "Universal 3D Virtual Environment Engine for Web & React — Offices, Farms, Factories, Schools, Hospitals with 60fps performance, raycasting and interactive entities.",
   "type": "module",
   "main": "./src/index.ts",
@@ -42,13 +42,18 @@
     "three": "^0.187.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.32.0",
     "@types/node": "^22.13.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.187.0",
+    "eslint": "^9.32.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.38.0",
     "vitest": "^3.0.5"
   },
   "keywords": [
