@@ -12,6 +12,41 @@ import {
 } from 'lucide-react'
 import type { PinDisplayMode } from '../core/types'
 import type { CameraPresetName } from '../engine/camera'
+import { type LabelOverrides, mergeLabels } from './labels'
+
+export interface WorldControlsLabels {
+  toolbar: string
+  isometricView: string
+  topView: string
+  topShort: string
+  resetCamera: string
+  minimalPins: string
+  pinsShort: string
+  detailedLabels: string
+  labelsShort: string
+  hideLabels: string
+  switchToDay: string
+  switchToNight: string
+  exitFullscreen: string
+  fullscreen: string
+}
+
+export const DEFAULT_WORLD_CONTROLS_LABELS: Readonly<WorldControlsLabels> = Object.freeze({
+  toolbar: '3D view controls',
+  isometricView: 'Isometric view',
+  topView: 'Top-down view',
+  topShort: 'Top',
+  resetCamera: 'Reset camera',
+  minimalPins: 'Minimal pins (numbers)',
+  pinsShort: 'Pins',
+  detailedLabels: 'Detailed label cards',
+  labelsShort: 'Labels',
+  hideLabels: 'Hide labels',
+  switchToDay: 'Switch to day mode',
+  switchToNight: 'Switch to night mode',
+  exitFullscreen: 'Exit fullscreen',
+  fullscreen: 'Fullscreen',
+})
 
 export interface WorldControlsProps {
   nightMode: boolean
@@ -23,6 +58,7 @@ export interface WorldControlsProps {
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
   fps?: number
+  labels?: LabelOverrides<WorldControlsLabels>
 }
 
 export function WorldControls({
@@ -35,14 +71,16 @@ export function WorldControls({
   isFullscreen,
   onToggleFullscreen,
   fps,
+  labels,
 }: WorldControlsProps): ReactNode {
+  const t = mergeLabels(DEFAULT_WORLD_CONTROLS_LABELS, labels)
+
   return (
-    <div className="wv-controls-toolbar" role="toolbar" aria-label="3D view controls">
-      {/* Camera Presets */}
+    <div className="wv-controls-toolbar" role="toolbar" aria-label={t.toolbar}>
       <button
         type="button"
         className="wv-btn wv-btn-icon"
-        title="Isometric view"
+        title={t.isometricView}
         onClick={() => onSelectCameraPreset('isometric')}
       >
         <Compass size={16} />
@@ -51,16 +89,16 @@ export function WorldControls({
       <button
         type="button"
         className="wv-btn"
-        title="Top-down view"
+        title={t.topView}
         onClick={() => onSelectCameraPreset('top')}
       >
-        Top
+        {t.topShort}
       </button>
 
       <button
         type="button"
         className="wv-btn wv-btn-icon"
-        title="Reset camera"
+        title={t.resetCamera}
         onClick={onResetCamera}
       >
         <RotateCcw size={15} />
@@ -68,31 +106,30 @@ export function WorldControls({
 
       <div className="wv-divider" />
 
-      {/* Pin Mode Toggle */}
       <button
         type="button"
         className={`wv-btn ${pinMode === 'pins' ? 'is-active' : ''}`}
-        title="Minimal pins (numbers)"
+        title={t.minimalPins}
         onClick={() => onChangePinMode('pins')}
       >
         <MapPin size={14} style={{ marginRight: 4 }} />
-        Pins
+        {t.pinsShort}
       </button>
 
       <button
         type="button"
         className={`wv-btn ${pinMode === 'labels' ? 'is-active' : ''}`}
-        title="Detailed label cards"
+        title={t.detailedLabels}
         onClick={() => onChangePinMode('labels')}
       >
         <Tag size={14} style={{ marginRight: 4 }} />
-        Labels
+        {t.labelsShort}
       </button>
 
       <button
         type="button"
         className={`wv-btn wv-btn-icon ${pinMode === 'off' ? 'is-active' : ''}`}
-        title="Hide labels"
+        title={t.hideLabels}
         onClick={() => onChangePinMode('off')}
       >
         <EyeOff size={15} />
@@ -100,29 +137,26 @@ export function WorldControls({
 
       <div className="wv-divider" />
 
-      {/* Day / Night Toggle */}
       <button
         type="button"
         className="wv-btn wv-btn-icon"
-        title={nightMode ? 'Switch to day mode' : 'Switch to night mode'}
+        title={nightMode ? t.switchToDay : t.switchToNight}
         onClick={onToggleNightMode}
       >
         {nightMode ? <Sun size={16} color="#f59e0b" /> : <Moon size={16} />}
       </button>
 
-      {/* Fullscreen Toggle */}
       {onToggleFullscreen && (
         <button
           type="button"
           className="wv-btn wv-btn-icon"
-          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          title={isFullscreen ? t.exitFullscreen : t.fullscreen}
           onClick={onToggleFullscreen}
         >
           {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
       )}
 
-      {/* FPS Counter */}
       {fps !== undefined && (
         <>
           <div className="wv-divider" />

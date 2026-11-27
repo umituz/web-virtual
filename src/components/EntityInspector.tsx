@@ -1,6 +1,29 @@
 import { type ReactNode, useEffect } from 'react'
 import { X, Focus } from 'lucide-react'
 import type { WorldEntity } from '../core/types'
+import { type LabelOverrides, formatTemplate, mergeLabels } from './labels'
+
+export interface EntityInspectorLabels {
+  close: string
+  roleFallback: string
+  department: string
+  statusWorking: string
+  statusAwaiting: string
+  statusIdle: string
+  attributes: string
+  focusCamera: string
+}
+
+export const DEFAULT_ENTITY_INSPECTOR_LABELS: Readonly<EntityInspectorLabels> = Object.freeze({
+  close: 'Close (Esc)',
+  roleFallback: 'Entity',
+  department: 'Department: {department}',
+  statusWorking: 'Working on a mission',
+  statusAwaiting: 'Awaiting approval',
+  statusIdle: 'Ready / idle',
+  attributes: 'ATTRIBUTES',
+  focusCamera: 'Focus 3D camera',
+})
 
 export interface EntityInspectorProps {
   entity: WorldEntity | null
@@ -8,6 +31,7 @@ export interface EntityInspectorProps {
   onFocusEntity?: (entity: WorldEntity) => void
   renderCustomActions?: (entity: WorldEntity) => ReactNode
   renderCustomContent?: (entity: WorldEntity) => ReactNode
+  labels?: LabelOverrides<EntityInspectorLabels>
 }
 
 export function EntityInspector({
@@ -16,7 +40,10 @@ export function EntityInspector({
   onFocusEntity,
   renderCustomActions,
   renderCustomContent,
+  labels,
 }: EntityInspectorProps): ReactNode {
+  const t = mergeLabels(DEFAULT_ENTITY_INSPECTOR_LABELS, labels)
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -50,7 +77,6 @@ export function EntityInspector({
         fontFamily: 'inherit',
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -91,25 +117,22 @@ export function EntityInspector({
             justifyContent: 'center',
             borderRadius: 6,
           }}
-          title="Close (Esc)"
+          title={t.close}
         >
           <X size={16} />
         </button>
       </div>
 
-      {/* Body */}
       <div style={{ padding: 14, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {/* Role & Department */}
         <div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{entity.role || 'Entity'}</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{entity.role || t.roleFallback}</div>
           {entity.department && (
             <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
-              Department: {entity.department}
+              {formatTemplate(t.department, { department: entity.department })}
             </div>
           )}
         </div>
 
-        {/* Status Badge */}
         <div
           style={{
             display: 'inline-flex',
@@ -132,24 +155,21 @@ export function EntityInspector({
             }}
           >
             {entity.status === 'running' || entity.status === 'working'
-              ? 'Working on a mission'
+              ? t.statusWorking
               : entity.status === 'awaiting_approval'
-                ? 'Awaiting approval'
-                : 'Ready / idle'}
+                ? t.statusAwaiting
+                : t.statusIdle}
           </span>
         </div>
 
-        {/* Description */}
         {entity.description && (
           <p style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.45, margin: 0 }}>
             {entity.description}
           </p>
         )}
 
-        {/* Custom Application Content */}
         {renderCustomContent && renderCustomContent(entity)}
 
-        {/* Metadata items if present */}
         {entity.metadata && Object.keys(entity.metadata).length > 0 && (
           <div
             style={{
@@ -160,7 +180,7 @@ export function EntityInspector({
               fontSize: 11,
             }}
           >
-            <div style={{ fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>ATTRIBUTES</div>
+            <div style={{ fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>{t.attributes}</div>
             {Object.entries(entity.metadata).map(([k, v]) => (
               <div
                 key={k}
@@ -181,7 +201,6 @@ export function EntityInspector({
         )}
       </div>
 
-      {/* Footer / Actions */}
       <div
         style={{
           padding: 12,
@@ -212,7 +231,7 @@ export function EntityInspector({
             }}
           >
             <Focus size={14} />
-            Focus 3D camera
+            {t.focusCamera}
           </button>
         )}
 

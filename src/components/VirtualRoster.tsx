@@ -11,6 +11,23 @@ import {
   Shield,
 } from 'lucide-react'
 import type { WorldEntity, DepartmentInfo } from '../core/types'
+import { type LabelOverrides, formatTemplate, mergeLabels } from './labels'
+
+export interface VirtualRosterLabels {
+  subheading: string
+  close: string
+  searchPlaceholder: string
+  all: string
+  staffFallback: string
+}
+
+export const DEFAULT_VIRTUAL_ROSTER_LABELS: Readonly<VirtualRosterLabels> = Object.freeze({
+  subheading: '{count} {plural} at their desks',
+  close: 'Hide roster panel',
+  searchPlaceholder: 'Search by name or role...',
+  all: 'All',
+  staffFallback: 'Staff member',
+})
 
 export interface VirtualRosterProps {
   entities: WorldEntity[]
@@ -24,6 +41,7 @@ export interface VirtualRosterProps {
   onSelectCategory: (cat: string) => void
   title?: string
   className?: string
+  labels?: LabelOverrides<VirtualRosterLabels>
 }
 
 export function VirtualRoster({
@@ -38,8 +56,10 @@ export function VirtualRoster({
   onSelectCategory,
   title = 'Office roster',
   className = '',
+  labels,
 }: VirtualRosterProps): ReactNode {
-  // Filter entities based on search and category
+  const t = mergeLabels(DEFAULT_VIRTUAL_ROSTER_LABELS, labels)
+
   const filtered = entities.filter((en) => {
     const nameMatch = en.name.toLowerCase().includes(searchQuery.toLowerCase())
     const roleMatch = (en.role || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -75,7 +95,6 @@ export function VirtualRoster({
 
   return (
     <aside className={`wv-roster-sidebar ${className}`} role="complementary" aria-label={title}>
-      {/* Header */}
       <div className="wv-roster-header">
         <div className="wv-roster-title-row">
           <div className="wv-roster-title-group">
@@ -85,7 +104,10 @@ export function VirtualRoster({
             <div>
               <h3 className="wv-roster-heading">{title}</h3>
               <p className="wv-roster-subheading">
-                {entities.length} {entities.length === 1 ? 'member' : 'members'} at their desks
+                {formatTemplate(t.subheading, {
+                  count: entities.length,
+                  plural: entities.length === 1 ? 'member' : 'members',
+                })}
               </p>
             </div>
           </div>
@@ -93,25 +115,23 @@ export function VirtualRoster({
             type="button"
             onClick={onClose}
             className="wv-roster-close-btn"
-            title="Hide roster panel"
+            title={t.close}
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Search Bar */}
         <div className="wv-roster-search-wrapper">
           <Search size={14} className="wv-roster-search-icon" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search by name or role..."
+            placeholder={t.searchPlaceholder}
             className="wv-roster-search-input"
           />
         </div>
 
-        {/* Category / Department Pills */}
         {departments.length > 0 && (
           <div className="wv-roster-filter-row">
             <button
@@ -119,7 +139,7 @@ export function VirtualRoster({
               onClick={() => onSelectCategory('all')}
               className={`wv-roster-pill ${selectedCategory === 'all' ? 'is-active' : ''}`}
             >
-              All
+              {t.all}
             </button>
             {departments.map((dept) => (
               <button
@@ -135,7 +155,6 @@ export function VirtualRoster({
         )}
       </div>
 
-      {/* Entity Item List */}
       <div className="wv-roster-list">
         {filtered.map((en) => {
           const isSelected = selectedEntityId === en.id
@@ -170,7 +189,7 @@ export function VirtualRoster({
                     {en.pinNumber && <span className="wv-roster-pin">#{en.pinNumber}</span>}
                     <h4 className="wv-roster-name">{en.name}</h4>
                   </div>
-                  <p className="wv-roster-role">{en.role || en.description || 'Staff member'}</p>
+                  <p className="wv-roster-role">{en.role || en.description || t.staffFallback}</p>
                 </div>
               </div>
 

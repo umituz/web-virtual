@@ -35,10 +35,27 @@ import {
 import type { WorldDefinition, WorldEntity, WorldPreset, PinDisplayMode, DepartmentInfo } from '../core/types'
 import { deriveDepartmentsFromZones } from '../core/environment'
 import { VirtualWorld, type VirtualWorldRef } from './VirtualWorld'
-import { VirtualCommandBar, type PresetMission } from './VirtualCommandBar'
-import { VirtualRoster } from './VirtualRoster'
-import { VirtualEntityDrawer, type EntityRunMetrics, type EntityLatestTask } from './VirtualEntityDrawer'
-import { VirtualReportModal, type VirtualReportData } from './VirtualReportModal'
+import {
+  VirtualCommandBar,
+  type PresetMission,
+  type VirtualCommandBarLabels,
+  DEFAULT_VIRTUAL_COMMAND_BAR_LABELS,
+} from './VirtualCommandBar'
+import { VirtualRoster, type VirtualRosterLabels, DEFAULT_VIRTUAL_ROSTER_LABELS } from './VirtualRoster'
+import {
+  VirtualEntityDrawer,
+  type EntityRunMetrics,
+  type EntityLatestTask,
+  type VirtualEntityDrawerLabels,
+  DEFAULT_VIRTUAL_ENTITY_DRAWER_LABELS,
+} from './VirtualEntityDrawer'
+import {
+  VirtualReportModal,
+  type VirtualReportData,
+  type VirtualReportModalLabels,
+  DEFAULT_VIRTUAL_REPORT_MODAL_LABELS,
+} from './VirtualReportModal'
+import { type LabelOverrides, formatTemplate, mergeLabels } from './labels'
 
 export type OperationalMode = 'office' | 'operations' | 'command_center'
 
@@ -55,6 +72,164 @@ export interface DigitalHQActivity {
   description?: string
   createdAt: string
 }
+
+export interface DigitalHQLabels {
+  header: {
+    brandBadge: string
+    brandDesc: string
+    desksStaffed: string
+    onAMission: string
+    awaitingApproval: string
+  }
+  modes: {
+    officeFloor: string
+    operations: string
+    commandCenter: string
+  }
+  actions: {
+    buildSquad: string
+    pinCycleTitle: string
+    labelsOff: string
+    deskNumbers: string
+    names: string
+    missionPanel: string
+    showMissionPanel: string
+    hideMissionPanel: string
+    roster: string
+    showRoster: string
+    hideRoster: string
+    switchToDay: string
+    switchToNight: string
+    resetCamera: string
+    openStandalone: string
+    standaloneTitle: string
+    dashboard: string
+    backTitle: string
+    exitFullscreen: string
+    fullscreen: string
+    refresh: string
+  }
+  canvas: {
+    loading: string
+    navHint: string
+    emptyTitle: string
+    emptyCopy: string
+    emptyBuild: string
+  }
+  operations: {
+    totalProjects: string
+    totalProjectsSub: string
+    departments: string
+    departmentsSub: string
+    activeStaff: string
+    activeStaffSub: string
+    awaitingApproval: string
+    awaitingSub: string
+    deptHeading: string
+    deptWorking: string
+    deskSingular: string
+    deskPlural: string
+    goToRoom: string
+    activityHeading: string
+    activityEmpty: string
+  }
+  command: {
+    title: string
+    subtitle: string
+    placeholder: string
+    fastDemo: string
+    realAI: string
+    start: string
+    reviewHeading: string
+    reviewEmpty: string
+    viewReport: string
+  }
+  rosterTitle: string
+  roster: VirtualRosterLabels
+  commandBar: VirtualCommandBarLabels
+  drawer: VirtualEntityDrawerLabels
+  report: VirtualReportModalLabels
+}
+
+export const DEFAULT_DIGITAL_HQ_LABELS: Readonly<DigitalHQLabels> = Object.freeze({
+  header: Object.freeze({
+    brandBadge: 'Universal 3D',
+    brandDesc: 'AI-powered virtual headquarters',
+    desksStaffed: '{staffed} / {capacity} desks staffed',
+    onAMission: '{count} on a mission',
+    awaitingApproval: '{count} awaiting approval',
+  }),
+  modes: Object.freeze({
+    officeFloor: 'Office floor (3D)',
+    operations: 'Operations',
+    commandCenter: 'AI command center',
+  }),
+  actions: Object.freeze({
+    buildSquad: 'Build squad ({capacity})',
+    pinCycleTitle: 'Cycle labels: off ➔ numbers (#) ➔ names',
+    labelsOff: 'Labels: off',
+    deskNumbers: 'Desk no. (#)',
+    names: 'Names',
+    missionPanel: 'Mission panel',
+    showMissionPanel: 'Show mission panel',
+    hideMissionPanel: 'Hide mission panel',
+    roster: 'Roster ({count})',
+    showRoster: 'Show roster panel',
+    hideRoster: 'Hide roster panel',
+    switchToDay: 'Switch to day mode (bright studio)',
+    switchToNight: 'Switch to night mode (evening lights)',
+    resetCamera: 'Reset camera to the default isometric angle',
+    openStandalone: 'Open standalone',
+    standaloneTitle: 'Open as a standalone fullscreen page',
+    dashboard: 'Dashboard',
+    backTitle: 'Back to dashboard',
+    exitFullscreen: 'Exit fullscreen',
+    fullscreen: 'Fullscreen',
+    refresh: 'Refresh data',
+  }),
+  canvas: Object.freeze({
+    loading: 'Loading the 3D office floor...',
+    navHint: 'Click a 3D desk to open its profile • Left drag: orbit • Right drag: pan • Wheel: zoom',
+    emptyTitle: 'The floor is ready — nobody is in yet',
+    emptyCopy:
+      'All {capacity} desks are installed and waiting. Bring your team in and they will take their seats here in 3D.',
+    emptyBuild: 'Build the squad ({capacity})',
+  }),
+  operations: Object.freeze({
+    totalProjects: 'Total projects',
+    totalProjectsSub: 'Active work portfolio',
+    departments: 'Departments',
+    departmentsSub: 'Functional work cells',
+    activeStaff: 'Active staff',
+    activeStaffSub: 'Specialists working at their desks',
+    awaitingApproval: 'Awaiting approval',
+    awaitingSub: 'Missions pending a manager approval',
+    deptHeading: 'Department rooms & desks',
+    deptWorking: '⚡ Working',
+    deskSingular: 'desk',
+    deskPlural: 'desks',
+    goToRoom: 'Go to room',
+    activityHeading: 'System activity feed',
+    activityEmpty: 'No recorded system activity yet.',
+  }),
+  command: Object.freeze({
+    title: 'AI command & orchestration',
+    subtitle: 'Dispatch missions to every department automatically through the general manager.',
+    placeholder:
+      'Describe a company goal or a complex project... (e.g. Build the strategy, visual briefs and budget plan for our new digital marketing campaign)',
+    fastDemo: 'Fast demo simulation',
+    realAI: 'Real LLM API',
+    start: 'Start orchestration',
+    reviewHeading: 'Missions awaiting review & approval',
+    reviewEmpty: 'No completed or approval-pending missions yet.',
+    viewReport: 'View report',
+  }),
+  rosterTitle: 'Office roster',
+  roster: DEFAULT_VIRTUAL_ROSTER_LABELS,
+  commandBar: DEFAULT_VIRTUAL_COMMAND_BAR_LABELS,
+  drawer: DEFAULT_VIRTUAL_ENTITY_DRAWER_LABELS,
+  report: DEFAULT_VIRTUAL_REPORT_MODAL_LABELS,
+})
 
 export interface DigitalHQViewProps {
   world: WorldDefinition
@@ -74,11 +249,11 @@ export interface DigitalHQViewProps {
   onSelectEntity?: (entity: WorldEntity | null) => void
   getEntityMetrics?: (entityId: string) => EntityRunMetrics | undefined
   getEntityLatestTask?: (entityId: string) => EntityLatestTask | null
-  /** Total number of desks in the office layout (defaults to the world's entity count). */
   deskCapacity?: number
   returnUrl?: string
   standaloneUrl?: string
   className?: string
+  labels?: LabelOverrides<DigitalHQLabels>
 }
 
 export function DigitalHQView({
@@ -103,11 +278,12 @@ export function DigitalHQView({
   returnUrl = '/app/office',
   standaloneUrl = '/digital-hq',
   className = '',
+  labels,
 }: DigitalHQViewProps): ReactNode {
-  // Navigation Mode
+  const t = mergeLabels(DEFAULT_DIGITAL_HQ_LABELS, labels)
+
   const [activeMode, setActiveMode] = useState<OperationalMode>('office')
 
-  // Layout / Sidebar / Toggles (Pure Zen Office Mode by default)
   const virtualWorldRef = useRef<VirtualWorldRef>(null)
   const [showRoster, setShowRoster] = useState(false)
   const [showCommandBar, setShowCommandBar] = useState(false)
@@ -115,7 +291,6 @@ export function DigitalHQView({
   const [nightMode, setNightMode] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  // Pin cycle toggle: off -> pins (#1..#17) -> labels (full names) -> off
   const handleCyclePinMode = useCallback(() => {
     setPinMode((prev) => {
       if (prev === 'off') return 'pins'
@@ -124,20 +299,17 @@ export function DigitalHQView({
     })
   }, [])
 
-  // Selection & Report
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null)
   const [viewingReport, setViewingReport] = useState<VirtualReportData | null>(null)
 
   const activeEntityId = selectedEntityId !== undefined ? selectedEntityId : internalSelectedId
   const activeEntity = world.entities.find((e) => e.id === activeEntityId) || null
 
-  // Command Bar & Dispatch
   const [targetId, setTargetId] = useState<string>('auto')
   const [promptText, setPromptText] = useState('')
   const [isDemoMode, setIsDemoMode] = useState(true)
   const [isLaunching, setIsLaunching] = useState(false)
 
-  // Roster Search & Category
   const [rosterSearch, setRosterSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
 
@@ -186,13 +358,10 @@ export function DigitalHQView({
     }
   }, [promptText, targetId, isDemoMode, onDispatchMission])
 
-  // Count active running workers
   const activeWorkersCount = useMemo(() => {
     return world.entities.filter((e) => e.status === 'running' || e.status === 'working').length
   }, [world.entities])
 
-  // Departments are consumer org data. When none are supplied, derive a
-  // neutral grouping from the preset's architectural zones instead.
   const departments = useMemo<DepartmentInfo[]>(() => {
     if (departmentsProp && departmentsProp.length > 0) return departmentsProp
     return deriveDepartmentsFromZones(world.zones, preset?.slots ?? [])
@@ -202,12 +371,10 @@ export function DigitalHQView({
     return world.entities.filter((e) => e.status === 'awaiting_approval').length
   }, [world.entities])
 
-  // Total desks in the office layout (defaults to the world's entity count)
   const capacity = deskCapacity ?? world.entities.length
 
   return (
     <div className={`wv-hq-container ${nightMode ? 'is-night' : ''} ${className}`}>
-      {/* 1. Header Toolbar */}
       <header className="wv-hq-header">
         <div className="wv-hq-header-left">
           <div className="wv-hq-brand-group">
@@ -217,33 +384,35 @@ export function DigitalHQView({
             <div>
               <div className="wv-hq-brand-title-row">
                 <h1 className="wv-hq-brand-title">{world.name}</h1>
-                <span className="wv-hq-badge">Universal 3D</span>
+                <span className="wv-hq-badge">{t.header.brandBadge}</span>
               </div>
-              <p className="wv-hq-brand-desc">AI-powered virtual headquarters</p>
+              <p className="wv-hq-brand-desc">{t.header.brandDesc}</p>
             </div>
           </div>
 
           <div className="wv-hq-stats-row">
             <span className="wv-hq-stat-pill is-green">
               <span className="wv-hq-pip" />
-              {world.entities.length} / {capacity} desks staffed
+              {formatTemplate(t.header.desksStaffed, {
+                staffed: world.entities.length,
+                capacity,
+              })}
             </span>
             {activeWorkersCount > 0 && (
               <span className="wv-hq-stat-pill is-purple">
                 <Zap size={12} />
-                {activeWorkersCount} on a mission
+                {formatTemplate(t.header.onAMission, { count: activeWorkersCount })}
               </span>
             )}
             {pendingApprovalsCount > 0 && (
               <span className="wv-hq-stat-pill is-amber">
                 <Clock size={12} />
-                {pendingApprovalsCount} awaiting approval
+                {formatTemplate(t.header.awaitingApproval, { count: pendingApprovalsCount })}
               </span>
             )}
           </div>
         </div>
 
-        {/* Operational Mode Navigation Tabs */}
         <div className="wv-hq-mode-tabs">
           <button
             type="button"
@@ -251,7 +420,7 @@ export function DigitalHQView({
             className={`wv-hq-mode-tab ${activeMode === 'office' ? 'is-active' : ''}`}
           >
             <Compass size={14} color="#3b82f6" />
-            <span>Office floor (3D)</span>
+            <span>{t.modes.officeFloor}</span>
           </button>
 
           <button
@@ -260,7 +429,7 @@ export function DigitalHQView({
             className={`wv-hq-mode-tab ${activeMode === 'operations' ? 'is-active' : ''}`}
           >
             <LayoutDashboard size={14} color="#06b6d4" />
-            <span>Operations</span>
+            <span>{t.modes.operations}</span>
             {projects.length > 0 && (
               <span className="wv-hq-tab-count">{projects.length}</span>
             )}
@@ -272,14 +441,13 @@ export function DigitalHQView({
             className={`wv-hq-mode-tab ${activeMode === 'command_center' ? 'is-active' : ''}`}
           >
             <Terminal size={14} color="#a855f7" />
-            <span>AI command center</span>
+            <span>{t.modes.commandCenter}</span>
             {pendingApprovalsCount > 0 && (
               <span className="wv-hq-tab-badge">{pendingApprovalsCount}</span>
             )}
           </button>
         </div>
 
-        {/* Header Right Actions */}
         <div className="wv-hq-header-right">
           {onSeedSquad && world.entities.length < capacity && (
             <button
@@ -289,48 +457,50 @@ export function DigitalHQView({
               className="wv-hq-action-btn is-seed"
             >
               {isSeeding ? <Loader2 size={13} className="wv-spin" /> : <Sparkles size={13} />}
-              <span>Build squad ({capacity})</span>
+              <span>{formatTemplate(t.actions.buildSquad, { capacity })}</span>
             </button>
           )}
 
           {activeMode === 'office' && (
             <>
-              {/* Pin Mode 3-Way Cycle Toggle */}
               <button
                 type="button"
                 onClick={handleCyclePinMode}
                 className={`wv-hq-action-btn ${pinMode !== 'off' ? 'is-active' : ''}`}
-                title="Cycle labels: off ➔ numbers (#) ➔ names"
+                title={t.actions.pinCycleTitle}
               >
                 <Tag size={14} />
                 <span>
-                  {pinMode === 'off' ? 'Labels: off' : pinMode === 'pins' ? 'Desk no. (#)' : 'Names'}
+                  {pinMode === 'off'
+                    ? t.actions.labelsOff
+                    : pinMode === 'pins'
+                      ? t.actions.deskNumbers
+                      : t.actions.names}
                 </span>
               </button>
 
-              {/* Command Bar Toggle */}
               <button
                 type="button"
                 onClick={() => setShowCommandBar((prev) => !prev)}
                 className={`wv-hq-action-btn ${showCommandBar ? 'is-active' : ''}`}
-                title={showCommandBar ? 'Hide mission panel' : 'Show mission panel'}
+                title={showCommandBar ? t.actions.hideMissionPanel : t.actions.showMissionPanel}
               >
                 <Terminal size={14} />
-                <span className="wv-hide-mobile">Mission panel</span>
+                <span className="wv-hide-mobile">{t.actions.missionPanel}</span>
               </button>
 
-              {/* Roster Sidebar Toggle */}
               <button
                 type="button"
                 onClick={handleToggleRoster}
                 className={`wv-hq-action-btn ${showRoster ? 'is-active' : ''}`}
-                title={showRoster ? 'Hide roster panel' : 'Show roster panel'}
+                title={showRoster ? t.actions.hideRoster : t.actions.showRoster}
               >
                 {showRoster ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
-                <span className="wv-hide-mobile">Roster ({world.entities.length})</span>
+                <span className="wv-hide-mobile">
+                  {formatTemplate(t.actions.roster, { count: world.entities.length })}
+                </span>
               </button>
 
-              {/* Lighting Toggle */}
               <button
                 type="button"
                 onClick={() => {
@@ -339,17 +509,16 @@ export function DigitalHQView({
                   virtualWorldRef.current?.setNightMode(next)
                 }}
                 className="wv-hq-icon-btn"
-                title={nightMode ? 'Switch to day mode (bright studio)' : 'Switch to night mode (evening lights)'}
+                title={nightMode ? t.actions.switchToDay : t.actions.switchToNight}
               >
                 {nightMode ? <Sun size={15} color="#f59e0b" /> : <Moon size={15} />}
               </button>
 
-              {/* Camera Reset */}
               <button
                 type="button"
                 onClick={() => virtualWorldRef.current?.resetCamera()}
                 className="wv-hq-icon-btn"
-                title="Reset camera to the default isometric angle"
+                title={t.actions.resetCamera}
               >
                 <RotateCcw size={15} />
               </button>
@@ -362,19 +531,19 @@ export function DigitalHQView({
               target="_blank"
               rel="noreferrer"
               className="wv-hq-action-btn"
-              title="Open as a standalone fullscreen page"
+              title={t.actions.standaloneTitle}
             >
               <ExternalLink size={14} />
-              <span className="wv-hide-mobile">Open standalone</span>
+              <span className="wv-hide-mobile">{t.actions.openStandalone}</span>
             </a>
           ) : (
             <a
               href={returnUrl}
               className="wv-hq-action-btn"
-              title="Back to dashboard"
+              title={t.actions.backTitle}
             >
               <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />
-              <span className="wv-hide-mobile">Dashboard</span>
+              <span className="wv-hide-mobile">{t.actions.dashboard}</span>
             </a>
           )}
 
@@ -382,7 +551,7 @@ export function DigitalHQView({
             type="button"
             onClick={handleToggleFullscreen}
             className="wv-hq-icon-btn"
-            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            title={isFullscreen ? t.actions.exitFullscreen : t.actions.fullscreen}
           >
             {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
           </button>
@@ -393,7 +562,7 @@ export function DigitalHQView({
               onClick={onRefresh}
               disabled={refreshing}
               className="wv-hq-icon-btn"
-              title="Refresh data"
+              title={t.actions.refresh}
             >
               <RefreshCw size={15} className={refreshing ? 'wv-spin' : ''} />
             </button>
@@ -401,28 +570,22 @@ export function DigitalHQView({
         </div>
       </header>
 
-      {/* 2. Main Content Viewport */}
       <div className="wv-hq-main-viewport">
-        {/* ========================================================== */}
-        {/* MODE 1: 3D VIRTUAL WORLD VIEW                              */}
-        {/* ========================================================== */}
         {activeMode === 'office' && (
           <div className="wv-hq-office-layout">
             <div className="wv-hq-canvas-wrapper">
               {loading && (
                 <div className="wv-hq-loading-overlay">
                   <Loader2 size={32} className="wv-spin" color="#3b82f6" />
-                  <p>Loading the 3D office floor...</p>
+                  <p>{t.canvas.loading}</p>
                 </div>
               )}
 
-              {/* Navigation Hint */}
               <div className="wv-hq-nav-hint">
                 <Compass size={14} color="#3b82f6" />
-                <span>Click a 3D desk to open its profile • Left drag: orbit • Right drag: pan • Wheel: zoom</span>
+                <span>{t.canvas.navHint}</span>
               </div>
 
-              {/* 3D Viewport */}
               <VirtualWorld
                 ref={virtualWorldRef}
                 world={world}
@@ -440,16 +603,12 @@ export function DigitalHQView({
                 showControls={false}
                 showInspector={false}
               >
-                {/* Friendly empty state when no occupants are placed yet */}
                 {world.entities.length === 0 && (
                   <div className="wv-hq-empty-floor">
                     <div className="wv-hq-empty-floor-card">
                       <Users size={28} />
-                      <h3>The floor is ready — nobody is in yet</h3>
-                      <p>
-                        All {capacity} desks are installed and waiting. Bring your team in and they
-                        will take their seats here in 3D.
-                      </p>
+                      <h3>{t.canvas.emptyTitle}</h3>
+                      <p>{formatTemplate(t.canvas.emptyCopy, { capacity })}</p>
                       {onSeedSquad && (
                         <button
                           type="button"
@@ -458,14 +617,13 @@ export function DigitalHQView({
                           className="wv-hq-empty-floor-btn"
                         >
                           {isSeeding ? <Loader2 size={14} className="wv-spin" /> : <Sparkles size={14} />}
-                          <span>Build the squad ({capacity})</span>
+                          <span>{formatTemplate(t.canvas.emptyBuild, { capacity })}</span>
                         </button>
                       )}
                     </div>
                   </div>
                 )}
 
-                {/* Floating Bottom Command Bar Overlay */}
                 <VirtualCommandBar
                   presetMissions={presetMissions}
                   entities={world.entities}
@@ -479,11 +637,11 @@ export function DigitalHQView({
                   isLaunching={isLaunching}
                   isOpen={showCommandBar}
                   onToggleOpen={setShowCommandBar}
+                  labels={labels?.commandBar}
                 />
               </VirtualWorld>
             </div>
 
-            {/* Collapsible Roster Sidebar */}
             {showRoster && (
               <VirtualRoster
                 entities={world.entities}
@@ -498,10 +656,11 @@ export function DigitalHQView({
                 onSearchChange={setRosterSearch}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
+                title={t.rosterTitle}
+                labels={labels?.roster}
               />
             )}
 
-            {/* Selected Entity Profile Drawer */}
             {activeEntity && (
               <VirtualEntityDrawer
                 entity={activeEntity}
@@ -525,61 +684,57 @@ export function DigitalHQView({
                 }}
                 onDispatch={handleDispatch}
                 isDispatching={isLaunching}
+                labels={labels?.drawer}
               />
             )}
           </div>
         )}
 
-        {/* ========================================================== */}
-        {/* MODE 2: OPERATIONS DASHBOARD                               */}
-        {/* ========================================================== */}
         {activeMode === 'operations' && (
           <div className="wv-hq-operations-view">
-            {/* Metrics Grid */}
             <div className="wv-hq-ops-metrics-grid">
               <div className="wv-hq-ops-metric-card">
                 <div className="wv-ops-metric-header">
-                  <span>Total projects</span>
+                  <span>{t.operations.totalProjects}</span>
                   <FolderKanban size={16} color="#3b82f6" />
                 </div>
                 <div className="wv-ops-metric-num">{projects.length}</div>
-                <p className="wv-ops-metric-sub">Active work portfolio</p>
+                <p className="wv-ops-metric-sub">{t.operations.totalProjectsSub}</p>
               </div>
 
               <div className="wv-hq-ops-metric-card">
                 <div className="wv-ops-metric-header">
-                  <span>Departments</span>
+                  <span>{t.operations.departments}</span>
                   <Building2 size={16} color="#06b6d4" />
                 </div>
                 <div className="wv-ops-metric-num">{departments.length}</div>
-                <p className="wv-ops-metric-sub">Functional work cells</p>
+                <p className="wv-ops-metric-sub">{t.operations.departmentsSub}</p>
               </div>
 
               <div className="wv-hq-ops-metric-card">
                 <div className="wv-ops-metric-header">
-                  <span>Active staff</span>
+                  <span>{t.operations.activeStaff}</span>
                   <Zap size={16} color="#a855f7" />
                 </div>
                 <div className="wv-ops-metric-num">{activeWorkersCount} / {capacity}</div>
-                <p className="wv-ops-metric-sub">Specialists working at their desks</p>
+                <p className="wv-ops-metric-sub">{t.operations.activeStaffSub}</p>
               </div>
 
               <div className="wv-hq-ops-metric-card">
                 <div className="wv-ops-metric-header">
-                  <span>Awaiting approval</span>
+                  <span>{t.operations.awaitingApproval}</span>
                   <Clock size={16} color="#f59e0b" />
                 </div>
                 <div className="wv-ops-metric-num">{pendingApprovalsCount}</div>
-                <p className="wv-ops-metric-sub">Missions pending a manager approval</p>
+                <p className="wv-ops-metric-sub">{t.operations.awaitingSub}</p>
               </div>
             </div>
 
-            {/* Department Hubs & Activity Timeline */}
             <div className="wv-hq-ops-cols">
               <div className="wv-hq-ops-dept-col">
                 <h2 className="wv-hq-section-heading">
                   <Building2 size={16} color="#3b82f6" />
-                  <span>Department rooms & desks</span>
+                  <span>{t.operations.deptHeading}</span>
                 </h2>
 
                 <div className="wv-hq-dept-cards-grid">
@@ -592,14 +747,17 @@ export function DigitalHQView({
                         <div>
                           <div className="wv-dept-card-top">
                             <span className="wv-dept-color-pip" style={{ backgroundColor: dept.color }} />
-                            {isDeptBusy && <span className="wv-dept-busy-badge">⚡ Working</span>}
+                            {isDeptBusy && <span className="wv-dept-busy-badge">{t.operations.deptWorking}</span>}
                           </div>
                           <h3 className="wv-dept-name">{dept.name}</h3>
                           <p className="wv-dept-desc">{dept.description}</p>
                         </div>
 
                         <div className="wv-dept-card-bottom">
-                          <span>{deptEntities.length} {deptEntities.length === 1 ? 'desk' : 'desks'}</span>
+                          <span>
+                            {deptEntities.length}{' '}
+                            {deptEntities.length === 1 ? t.operations.deskSingular : t.operations.deskPlural}
+                          </span>
                           <button
                             type="button"
                             onClick={() => {
@@ -608,7 +766,7 @@ export function DigitalHQView({
                             }}
                             className="wv-dept-link-btn"
                           >
-                            <span>Go to room</span>
+                            <span>{t.operations.goToRoom}</span>
                             <ArrowRight size={13} />
                           </button>
                         </div>
@@ -618,18 +776,17 @@ export function DigitalHQView({
                 </div>
               </div>
 
-              {/* Activity Timeline */}
               <div className="wv-hq-ops-act-col">
                 <h2 className="wv-hq-section-heading">
                   <Activity size={16} color="#3b82f6" />
-                  <span>System activity feed</span>
+                  <span>{t.operations.activityHeading}</span>
                 </h2>
 
                 <div className="wv-hq-act-box">
                   {activities.length === 0 ? (
                     <div className="wv-hq-empty-act">
                       <Clock size={24} style={{ opacity: 0.4, margin: '0 auto 8px' }} />
-                      <p>No recorded system activity yet.</p>
+                      <p>{t.operations.activityEmpty}</p>
                     </div>
                   ) : (
                     activities.slice(0, 8).map((act) => (
@@ -651,23 +808,17 @@ export function DigitalHQView({
           </div>
         )}
 
-        {/* ========================================================== */}
-        {/* MODE 3: AI COMMAND CENTER                                  */}
-        {/* ========================================================== */}
         {activeMode === 'command_center' && (
           <div className="wv-hq-command-view">
             <div className="wv-hq-command-center-box">
-              {/* Mission Header Card */}
               <div className="wv-hq-dispatch-card">
                 <div className="wv-dispatch-header-row">
                   <div className="wv-dispatch-icon-badge">
                     <Terminal size={20} />
                   </div>
                   <div>
-                    <h2 className="wv-dispatch-title">AI command & orchestration</h2>
-                    <p className="wv-dispatch-sub">
-                      Dispatch missions to every department automatically through the general manager.
-                    </p>
+                    <h2 className="wv-dispatch-title">{t.command.title}</h2>
+                    <p className="wv-dispatch-sub">{t.command.subtitle}</p>
                   </div>
                 </div>
 
@@ -676,7 +827,7 @@ export function DigitalHQView({
                     value={promptText}
                     onChange={(e) => setPromptText(e.target.value)}
                     rows={3}
-                    placeholder="Describe a company goal or a complex project... (e.g. Build the strategy, visual briefs and budget plan for our new digital marketing campaign)"
+                    placeholder={t.command.placeholder}
                     className="wv-dispatch-textarea"
                   />
                   <div className="wv-dispatch-actions-row">
@@ -686,7 +837,7 @@ export function DigitalHQView({
                       className={`wv-demo-toggle-btn ${isDemoMode ? 'is-demo' : 'is-ai'}`}
                     >
                       {isDemoMode ? <Sparkles size={14} /> : <Bot size={14} />}
-                      <span>{isDemoMode ? 'Fast demo simulation' : 'Real LLM API'}</span>
+                      <span>{isDemoMode ? t.command.fastDemo : t.command.realAI}</span>
                     </button>
 
                     <button
@@ -696,23 +847,22 @@ export function DigitalHQView({
                       className="wv-dispatch-submit-big-btn"
                     >
                       {isLaunching ? <Loader2 size={16} className="wv-spin" /> : <Send size={15} />}
-                      <span>Start orchestration</span>
+                      <span>{t.command.start}</span>
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Tasks Review Feed */}
               <div className="wv-hq-review-section">
                 <h3 className="wv-hq-section-heading">
                   <Clock size={16} color="#f59e0b" />
-                  <span>Missions awaiting review & approval</span>
+                  <span>{t.command.reviewHeading}</span>
                 </h3>
 
                 <div className="wv-hq-review-feed">
                   {world.entities.filter((e) => getEntityLatestTask && getEntityLatestTask(e.id)).length === 0 ? (
                     <div className="wv-hq-empty-feed">
-                      No completed or approval-pending missions yet.
+                      {t.command.reviewEmpty}
                     </div>
                   ) : (
                     world.entities
@@ -745,7 +895,7 @@ export function DigitalHQView({
                               className="wv-review-view-btn"
                             >
                               <Eye size={14} />
-                              <span>View report</span>
+                              <span>{t.command.viewReport}</span>
                             </button>
                           </div>
                         )
@@ -758,11 +908,11 @@ export function DigitalHQView({
         )}
       </div>
 
-      {/* 3. Report Modal */}
       {viewingReport && (
         <VirtualReportModal
           report={viewingReport}
           onClose={() => setViewingReport(null)}
+          labels={labels?.report}
         />
       )}
     </div>

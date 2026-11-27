@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect } from 'react'
 import { X, Clock, FileText, Send, Zap } from 'lucide-react'
 import type { WorldEntity } from '../core/types'
+import { type LabelOverrides, formatTemplate, mergeLabels } from './labels'
 
 export interface EntityRunMetrics {
   totalRuns: number
@@ -15,6 +16,43 @@ export interface EntityLatestTask {
   status?: string
 }
 
+export interface VirtualEntityDrawerLabels {
+  close: string
+  deskTag: string
+  workStatus: string
+  statusWorking: string
+  statusAwaiting: string
+  statusIdle: string
+  totalMissions: string
+  successRate: string
+  cost: string
+  latestMission: string
+  summaryPrefix: string
+  viewReport: string
+  noMission: string
+  dispatchTitle: string
+  dispatchPlaceholder: string
+}
+
+export const DEFAULT_VIRTUAL_ENTITY_DRAWER_LABELS: Readonly<VirtualEntityDrawerLabels> =
+  Object.freeze({
+    close: 'Close (Esc)',
+    deskTag: 'Desk #{pin}',
+    workStatus: 'Work status',
+    statusWorking: '⚡ Working on a mission',
+    statusAwaiting: '⏳ Awaiting approval',
+    statusIdle: '✓ Idle / ready for a mission',
+    totalMissions: 'Total missions',
+    successRate: 'Success rate',
+    cost: 'Cost (last 24h)',
+    latestMission: 'Latest / active mission',
+    summaryPrefix: 'Summary: ',
+    viewReport: 'View output report',
+    noMission: 'No mission has been run at this desk yet.',
+    dispatchTitle: 'Assign a mission to this desk',
+    dispatchPlaceholder: 'e.g. Draft the new campaign copy...',
+  })
+
 export interface VirtualEntityDrawerProps {
   entity: WorldEntity | null
   onClose: () => void
@@ -26,6 +64,7 @@ export interface VirtualEntityDrawerProps {
   onDispatch?: () => void
   isDispatching?: boolean
   className?: string
+  labels?: LabelOverrides<VirtualEntityDrawerLabels>
 }
 
 export function VirtualEntityDrawer({
@@ -39,7 +78,10 @@ export function VirtualEntityDrawer({
   onDispatch,
   isDispatching = false,
   className = '',
+  labels,
 }: VirtualEntityDrawerProps): ReactNode {
+  const t = mergeLabels(DEFAULT_VIRTUAL_ENTITY_DRAWER_LABELS, labels)
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -55,7 +97,6 @@ export function VirtualEntityDrawer({
 
   return (
     <div className={`wv-profile-drawer ${className}`} role="dialog" aria-modal="true">
-      {/* Header Banner */}
       <div
         className="wv-drawer-header-banner"
         style={{ backgroundColor: entity.avatarColor || '#3b82f6' }}
@@ -64,14 +105,16 @@ export function VirtualEntityDrawer({
           type="button"
           onClick={onClose}
           className="wv-drawer-close-btn"
-          title="Close (Esc)"
+          title={t.close}
         >
           <X size={16} />
         </button>
 
         <div className="wv-drawer-meta-tags">
           {entity.pinNumber && (
-            <span className="wv-drawer-pin-tag">Desk #{entity.pinNumber}</span>
+            <span className="wv-drawer-pin-tag">
+              {formatTemplate(t.deskTag, { pin: entity.pinNumber })}
+            </span>
           )}
           {entity.department && (
             <span className="wv-drawer-dept-tag">{entity.department}</span>
@@ -82,47 +125,43 @@ export function VirtualEntityDrawer({
         <p className="wv-drawer-role">{entity.role || entity.description}</p>
       </div>
 
-      {/* Body Content */}
       <div className="wv-drawer-body">
-        {/* Status Row */}
         <div className="wv-drawer-status-card">
-          <span className="wv-drawer-status-label">Work status</span>
+          <span className="wv-drawer-status-label">{t.workStatus}</span>
           <span className={`wv-drawer-status-chip ${isRunning ? 'is-running' : isAwaiting ? 'is-awaiting' : 'is-idle'}`}>
             {isRunning
-              ? '⚡ Working on a mission'
+              ? t.statusWorking
               : isAwaiting
-                ? '⏳ Awaiting approval'
-                : '✓ Idle / ready for a mission'}
+                ? t.statusAwaiting
+                : t.statusIdle}
           </span>
         </div>
 
-        {/* Metrics Grid */}
         {metrics && (
           <div className="wv-drawer-metrics-grid">
             <div className="wv-drawer-metric-cell">
               <div className="wv-metric-val">{metrics.totalRuns}</div>
-              <div className="wv-metric-lbl">Total missions</div>
+              <div className="wv-metric-lbl">{t.totalMissions}</div>
             </div>
             <div className="wv-drawer-metric-cell">
               <div className="wv-metric-val is-success">
                 {metrics.successRate !== undefined ? `${Math.round(metrics.successRate)}%` : '100%'}
               </div>
-              <div className="wv-metric-lbl">Success rate</div>
+              <div className="wv-metric-lbl">{t.successRate}</div>
             </div>
             <div className="wv-drawer-metric-cell">
               <div className="wv-metric-val">
                 ${metrics.costUsd !== undefined ? metrics.costUsd.toFixed(3) : '0.000'}
               </div>
-              <div className="wv-metric-lbl">Cost (last 24h)</div>
+              <div className="wv-metric-lbl">{t.cost}</div>
             </div>
           </div>
         )}
 
-        {/* Current or Latest Task */}
         {latestTask ? (
           <div className="wv-drawer-task-section">
             <div className="wv-task-header">
-              <span className="wv-task-title">Latest / active mission</span>
+              <span className="wv-task-title">{t.latestMission}</span>
               {latestTask.createdAt && (
                 <span className="wv-task-time">
                   {new Date(latestTask.createdAt).toLocaleTimeString([], {
@@ -137,7 +176,7 @@ export function VirtualEntityDrawer({
               <p className="wv-task-prompt">{latestTask.prompt}</p>
               {latestTask.summary && (
                 <div className="wv-task-summary">
-                  <strong>Summary: </strong>
+                  <strong>{t.summaryPrefix}</strong>
                   {latestTask.summary}
                 </div>
               )}
@@ -148,7 +187,7 @@ export function VirtualEntityDrawer({
                   className="wv-view-report-btn"
                 >
                   <FileText size={13} style={{ marginRight: 6 }} />
-                  <span>View output report</span>
+                  <span>{t.viewReport}</span>
                 </button>
               )}
             </div>
@@ -156,14 +195,13 @@ export function VirtualEntityDrawer({
         ) : (
           <div className="wv-drawer-empty-task">
             <Clock size={20} className="wv-empty-icon" />
-            <p>No mission has been run at this desk yet.</p>
+            <p>{t.noMission}</p>
           </div>
         )}
 
-        {/* Direct Dispatch to this Entity */}
         {onDispatch && onChangeDispatchPrompt && (
           <div className="wv-drawer-dispatch-section">
-            <span className="wv-dispatch-title">Assign a mission to this desk</span>
+            <span className="wv-dispatch-title">{t.dispatchTitle}</span>
             <div className="wv-dispatch-row">
               <input
                 type="text"
@@ -175,7 +213,7 @@ export function VirtualEntityDrawer({
                     onDispatch()
                   }
                 }}
-                placeholder="e.g. Draft the new campaign copy..."
+                placeholder={t.dispatchPlaceholder}
                 className="wv-dispatch-input"
               />
               <button

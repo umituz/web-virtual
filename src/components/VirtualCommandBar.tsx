@@ -1,11 +1,40 @@
 import { type ReactNode, useState } from 'react'
 import { Send, Sparkles, Bot, Loader2, ChevronDown } from 'lucide-react'
 import type { WorldEntity } from '../core/types'
+import { type LabelOverrides, mergeLabels } from './labels'
 
 export interface PresetMission {
   label: string
   prompt: string
 }
+
+export interface VirtualCommandBarLabels {
+  openPanel: string
+  panelCollapsed: string
+  collapseTitle: string
+  collapseShort: string
+  generalManager: string
+  desksOptgroup: string
+  executionMode: string
+  fastDemo: string
+  realAI: string
+  launch: string
+  defaultPlaceholder: string
+}
+
+export const DEFAULT_VIRTUAL_COMMAND_BAR_LABELS: Readonly<VirtualCommandBarLabels> = Object.freeze({
+  openPanel: 'Open mission panel',
+  panelCollapsed: '⚡ Mission Panel ▲',
+  collapseTitle: 'Collapse mission panel',
+  collapseShort: 'Hide ▼',
+  generalManager: '👑 General Manager (auto-delegate)',
+  desksOptgroup: 'Office desks / staff',
+  executionMode: 'Execution mode',
+  fastDemo: 'Fast demo',
+  realAI: 'Real AI',
+  launch: 'Launch',
+  defaultPlaceholder: 'Assign a mission to the general manager or a specialist... (Enter to send)',
+})
 
 export interface VirtualCommandBarProps {
   presetMissions?: PresetMission[]
@@ -23,6 +52,7 @@ export interface VirtualCommandBarProps {
   onToggleOpen?: (open: boolean) => void
   placeholder?: string
   className?: string
+  labels?: LabelOverrides<VirtualCommandBarLabels>
 }
 
 export function VirtualCommandBar({
@@ -39,9 +69,12 @@ export function VirtualCommandBar({
   defaultOpen = false,
   isOpen: externalIsOpen,
   onToggleOpen,
-  placeholder = "Assign a mission to the general manager or a specialist... (Enter to send)",
+  placeholder,
   className = '',
+  labels,
 }: VirtualCommandBarProps): ReactNode {
+  const t = mergeLabels(DEFAULT_VIRTUAL_COMMAND_BAR_LABELS, labels)
+
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
 
@@ -56,17 +89,16 @@ export function VirtualCommandBar({
         type="button"
         onClick={() => handleToggle(true)}
         className="wv-command-collapsed-btn"
-        aria-label="Open mission panel"
+        aria-label={t.openPanel}
       >
         <Send size={14} color="#3b82f6" />
-        <span>⚡ Mission Panel ▲</span>
+        <span>{t.panelCollapsed}</span>
       </button>
     )
   }
 
   return (
     <div className={`wv-command-bar-wrapper ${className}`}>
-      {/* Preset Missions Carousel / Chips */}
       {presetMissions.length > 0 && (
         <div className="wv-command-presets-row">
           <div className="wv-command-presets-scroll">
@@ -86,25 +118,23 @@ export function VirtualCommandBar({
             type="button"
             onClick={() => handleToggle(false)}
             className="wv-collapse-btn"
-            title="Collapse mission panel"
+            title={t.collapseTitle}
           >
-            Hide ▼
+            {t.collapseShort}
           </button>
         </div>
       )}
 
-      {/* Main Command Input Box */}
       <div className="wv-command-box">
-        {/* Target Entity Selector */}
         <div className="wv-target-selector-wrapper">
           <select
             value={targetEntityId}
             onChange={(e) => onChangeTarget(e.target.value)}
             className="wv-target-select"
           >
-            <option value="auto">👑 General Manager (auto-delegate)</option>
+            <option value="auto">{t.generalManager}</option>
             {entities.length > 0 && (
-              <optgroup label="Office desks / staff">
+              <optgroup label={t.desksOptgroup}>
                 {entities.map((en) => (
                   <option key={en.id} value={en.id}>
                     {en.pinNumber ? `#${en.pinNumber} ` : ''}
@@ -117,7 +147,6 @@ export function VirtualCommandBar({
           <ChevronDown size={14} className="wv-select-chevron" />
         </div>
 
-        {/* Prompt Input */}
         <input
           type="text"
           value={prompt}
@@ -128,24 +157,22 @@ export function VirtualCommandBar({
               onDispatch()
             }
           }}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t.defaultPlaceholder}
           className="wv-prompt-input"
         />
 
-        {/* Fast Demo / Real AI Toggle */}
         {onToggleDemoMode && (
           <button
             type="button"
             onClick={onToggleDemoMode}
             className={`wv-demo-toggle-btn ${isDemoMode ? 'is-demo' : 'is-ai'}`}
-            title="Execution mode"
+            title={t.executionMode}
           >
             {isDemoMode ? <Sparkles size={14} /> : <Bot size={14} />}
-            <span className="wv-demo-label">{isDemoMode ? 'Fast demo' : 'Real AI'}</span>
+            <span className="wv-demo-label">{isDemoMode ? t.fastDemo : t.realAI}</span>
           </button>
         )}
 
-        {/* Submit / Dispatch Button */}
         <button
           type="button"
           onClick={onDispatch}
@@ -157,7 +184,7 @@ export function VirtualCommandBar({
           ) : (
             <>
               <Send size={14} style={{ marginRight: 6 }} />
-              <span>Launch</span>
+              <span>{t.launch}</span>
             </>
           )}
         </button>

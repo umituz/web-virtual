@@ -1,3 +1,4 @@
+export * from './labels'
 export * from './VirtualWorld'
 export * from './WorldControls'
 export * from './EntityPins'
