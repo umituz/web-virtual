@@ -9,12 +9,15 @@ import type {
   EntitySelectedEvent,
   WorldTickFn,
   UnregisterTick,
+  WorldTourConfig,
 } from '../core/types'
 import { MaterialPalette } from './materials'
 import { WorldLighting } from './lighting'
 import { WorldCamera, type CameraPresetName } from './camera'
 import { WorldRaycaster } from './raycaster'
 import { PerformanceManager, DirectDOMProjector } from './performance'
+import { createCameraTour, type CameraTourHandle } from './tour'
+import { damp } from './animation'
 
 export interface WorldEngineOptions {
   canvas: HTMLCanvasElement
@@ -24,6 +27,16 @@ export interface WorldEngineOptions {
   onHoverEntity?: (entity: WorldEntity | null) => void
   onFpsUpdate?: (fps: number) => void
   onContextLost?: () => void
+}
+
+interface TourRunState {
+  config: WorldTourConfig
+  handle: CameraTourHandle
+  index: number
+  phase: 'move' | 'hold'
+  phaseElapsed: number
+  onStop?: (index: number) => void
+  unregister: UnregisterTick
 }
 
 export class WorldEngine {
@@ -48,6 +61,7 @@ export class WorldEngine {
   private clock = new THREE.Clock()
   private hoveredEntityId: string | null = null
   private composer: EffectComposer | null = null
+  private tourState: TourRunState | null = null
 
   constructor(private options: WorldEngineOptions) {
     const { canvas, world } = options
@@ -119,6 +133,96 @@ export class WorldEngine {
     this.ticks.add(fn)
     return () => {
       this.ticks.delete(fn)
+    }
+  }
+
+  /**
+   * Guided cinematic tour: slowly orbits (auto-rotate) while cycling through
+   * camera stops. Stops carrying `position` + `target` are damped to during a
+   * transition window; `onStop` fires on each arrival so the host UI can show
+   * the stop's narration.
+   */
+  public startTour(config: WorldTourConfig, onStop?: (index: number) => void): void {
+    this.stopTour()
+    if (config.stops.length === 0) return
+    const handle = createCameraTour({
+      controls: this.cameraSystem.controls,
+      speed: config.autoRotateSpeed,
+    })
+    const first = config.stops[0]
+    if (first?.position && first.target) handle.stop()
+    const state: TourRunState = {
+      config,
+      handle,
+      index: 0,
+      phase: 'move',
+      phaseElapsed: 0,
+      onStop,
+      unregister: () => {},
+    }
+    state.unregister = this.registerTick((delta) => {
+      this.stepTour(state, delta)
+    })
+    this.tourState = state
+    handle.start()
+    this.stepTour(state, 0)
+  }
+
+  public stopTour(): void {
+    const state = this.tourState
+    if (!state) return
+    state.unregister()
+    state.handle.stop()
+    this.tourState = null
+  }
+
+  public isTouring(): boolean {
+    return this.tourState !== null
+  }
+
+  private stepTour(state: TourRunState, delta: number): void {
+    const stops = state.config.stops
+    const stop = stops[state.index]
+    if (!stop) {
+      this.stopTour()
+      return
+    }
+    const transitionSeconds = state.config.transitionSeconds ?? 2.4
+    const holdSeconds = stop.holdSeconds ?? 6
+    state.phaseElapsed += delta
+
+    if (state.phase === 'move') {
+      const hasFocus = stop.position != null && stop.target != null
+      if (stop.position && stop.target) {
+        const lambda = 3.2
+        const camera = this.cameraSystem.camera
+        const target = this.cameraSystem.controls.target
+        camera.position.set(
+          damp(camera.position.x, stop.position[0], lambda, delta),
+          damp(camera.position.y, stop.position[1], lambda, delta),
+          damp(camera.position.z, stop.position[2], lambda, delta),
+        )
+        target.set(
+          damp(target.x, stop.target[0], lambda, delta),
+          damp(target.y, stop.target[1], lambda, delta),
+          damp(target.z, stop.target[2], lambda, delta),
+        )
+      }
+      if (state.phaseElapsed >= (hasFocus ? transitionSeconds : 0)) {
+        state.phase = 'hold'
+        state.phaseElapsed = 0
+        state.handle.start()
+        state.onStop?.(state.index)
+      }
+      return
+    }
+
+    if (state.phaseElapsed >= holdSeconds) {
+      state.index = (state.index + 1) % stops.length
+      state.phase = 'move'
+      state.phaseElapsed = 0
+      const next = stops[state.index]
+      if (next?.position && next.target) state.handle.stop()
     }
   }
 
@@ -324,6 +428,7 @@ export class WorldEngine {
 
   public dispose(): void {
     this.isDisposed = true
+    this.stopTour()
     this.stopLoop()
     this.ticks.clear()
     if (this.visibilityHandler) {

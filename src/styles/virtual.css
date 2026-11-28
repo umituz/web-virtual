@@ -2387,3 +2387,35 @@
     border-top: 1px solid var(--wv-page-line);
   }
 }
+
+.wv-page__tour {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-width: min(520px, calc(100% - 32px));
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--wv-page-line);
+  background: color-mix(in srgb, var(--wv-page-card) 88%, transparent);
+  box-shadow: var(--wv-page-shadow);
+  pointer-events: none;
+  text-align: center;
+}
+
+.wv-page__tour-title {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--wv-page-fg);
+}
+
+.wv-page__tour-caption {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--wv-page-muted);
+}

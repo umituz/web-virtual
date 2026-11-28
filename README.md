@@ -73,6 +73,32 @@ aquaponic tank with its hydro loop, ceiling climate units and a propagation
 bench (`VERTICAL_LAB_SLOTS` for occupant anchors). Bloom is on by default
 there; pass `effects: { bloom: false }` to opt out.
 
+### Guided tour (2.7.1)
+
+`VirtualWorldPage` accepts a `tour` prop — a config-driven cinematic walk-through:
+
+```tsx
+<VirtualWorldPage
+  tour={{
+    stops: [
+      { id: 'intro', title: 'Grow room', caption: 'Four rack rows under LED photoperiod', position: [15, 9.5, 17], target: [0, 2, 0] },
+      { id: 'tanks', title: 'Aquaponics', caption: 'Fish waste feeds the towers', position: [8, 3, 6], target: [5.5, 0.9, 2.5], holdSeconds: 8 },
+    ],
+    autoRotateSpeed: 0.8,
+    transitionSeconds: 2.4,
+  }}
+  labels={{ toggleTour: 'Guided tour' }}
+  …
+/>
+```
+
+The camera damps to each stop (`position` + `target`), slow-orbits while
+holding, then advances; a caption pill renders the current stop's `title` /
+`caption` (consumer strings — the package ships none). A play/stop button is
+added to the header; the top-view and reset buttons end the tour. Engine-side
+the same machinery is available via `WorldEngine.startTour(config, onStop)` /
+`stopTour()` and the `createCameraTour()` auto-orbit handle.
+
 ---
 
 ---

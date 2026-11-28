@@ -16,8 +16,14 @@ import {
   useRef,
   useState,
 } from 'react'
-import { LayoutGrid, Moon, RotateCcw, Sun, Tags } from 'lucide-react'
-import type { PinDisplayMode, WorldDefinition, WorldEntity, WorldPreset } from '../core/types'
+import { LayoutGrid, Moon, Play, RotateCcw, Square, Sun, Tags } from 'lucide-react'
+import type {
+  PinDisplayMode,
+  WorldDefinition,
+  WorldEntity,
+  WorldPreset,
+  WorldTourConfig,
+} from '../core/types'
 import { isNightHour } from '../core/time'
 import { VirtualWorld, type VirtualWorldProps, type VirtualWorldRef } from './VirtualWorld'
 
@@ -47,6 +53,8 @@ export interface WorldPageLabels {
   topView: string
   /** Aria-label for the reset-camera button. */
   resetView: string
+  /** Title for the guided-tour toggle button (rendered when `tour` is set). */
+  toggleTour?: string
   /** Selected-card fallback when the entity opens nowhere. */
   focusOnly?: string
 }
@@ -74,6 +82,12 @@ export type VirtualWorldPageProps = {
   initialNight?: boolean | 'auto'
   /** Show the day/night toggle button. */
   nightToggle?: boolean
+  /**
+   * Guided cinematic tour: cycles the camera through stops with optional
+   * narration (title/caption strings come from the consumer). Adds a play
+   * button to the header and a caption pill over the canvas.
+   */
+  tour?: WorldTourConfig
   labels?: Partial<WorldPageLabels>
   /** Selected-card subtitle; defaults to `entity.metadata.subtitle` when a string. */
   renderSubtitle?: (entity: WorldEntity) => ReactNode
@@ -94,6 +108,7 @@ const DEFAULT_LABELS: WorldPageLabels = {
   toggleNight: 'Toggle day/night',
   topView: 'Top view',
   resetView: 'Reset view',
+  toggleTour: 'Guided tour',
   focusOnly: 'focus only',
 }
 
@@ -116,6 +131,7 @@ export function VirtualWorldPage({
   initialPinMode = 'labels',
   initialNight = false,
   nightToggle = false,
+  tour,
   labels,
   renderSubtitle,
   renderOpenLink,
@@ -130,8 +146,28 @@ export function VirtualWorldPage({
     initialNight === 'auto' ? isNightHour() : initialNight,
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [touring, setTouring] = useState(false)
+  const [tourStopIndex, setTourStopIndex] = useState<number | null>(null)
 
   const selected: WorldEntity | null = world.entities.find((e) => e.id === selectedId) ?? null
+
+  const { onTourStopChange: consumerTourStopChange, ...passthroughWorldProps } = worldProps ?? {}
+
+  const stopTour = useCallback((): void => {
+    worldRef.current?.setTour(null)
+    setTouring(false)
+    setTourStopIndex(null)
+  }, [])
+
+  const toggleTour = useCallback((): void => {
+    if (touring) {
+      stopTour()
+      return
+    }
+    if (!tour || tour.stops.length === 0) return
+    worldRef.current?.setTour(tour)
+    setTouring(true)
+  }, [touring, tour, stopTour])
 
   const handleCanvasSelect = useCallback(
     (entity: WorldEntity | null): void => {
@@ -154,6 +190,7 @@ export function VirtualWorldPage({
   const subtitle = selected
     ? (renderSubtitle?.(selected) ?? metadataSubtitle(selected))
     : null
+  const currentStop = tourStopIndex != null ? tour?.stops[tourStopIndex] : undefined
 
   return (
     <div className={`wv-page${className ? ` ${className}` : ''}`} data-wv-page>
@@ -186,13 +223,29 @@ export function VirtualWorldPage({
               {nightMode ? <Sun size={15} /> : <Moon size={15} />}
             </button>
           )}
+          {tour && tour.stops.length > 0 && (
+            <button
+              type="button"
+              className="wv-page__btn"
+              data-wv-tour-btn
+              title={resolved.toggleTour}
+              aria-label={resolved.toggleTour}
+              aria-pressed={touring}
+              onClick={toggleTour}
+            >
+              {touring ? <Square size={15} /> : <Play size={15} />}
+            </button>
+          )}
           <button
             type="button"
             className="wv-page__btn"
             data-wv-view-top
             title={resolved.topView}
             aria-label={resolved.topView}
-            onClick={() => worldRef.current?.setCameraPreset('top')}
+            onClick={() => {
+              stopTour()
+              worldRef.current?.setCameraPreset('top')
+            }}
           >
             <LayoutGrid size={15} />
           </button>
@@ -202,7 +255,10 @@ export function VirtualWorldPage({
             data-wv-reset
             title={resolved.resetView}
             aria-label={resolved.resetView}
-            onClick={() => worldRef.current?.resetCamera()}
+            onClick={() => {
+              stopTour()
+              worldRef.current?.resetCamera()
+            }}
           >
             <RotateCcw size={15} />
           </button>
@@ -221,7 +277,11 @@ export function VirtualWorldPage({
             onSelectEntity={handleCanvasSelect}
             showControls={false}
             showInspector={false}
-            {...worldProps}
+            {...passthroughWorldProps}
+            onTourStopChange={(index) => {
+              setTourStopIndex(index)
+              consumerTourStopChange?.(index)
+            }}
             className={`wv-page__canvas${canvasClassName ? ` ${canvasClassName}` : ''}`}
           />
 
@@ -240,6 +300,15 @@ export function VirtualWorldPage({
               ) : resolved.focusOnly ? (
                 <span className="wv-page__selected-hint">{resolved.focusOnly}</span>
               ) : null}
+            </div>
+          )}
+
+          {touring && currentStop && (currentStop.title || currentStop.caption) && (
+            <div className="wv-page__tour" data-wv-tour>
+              {currentStop.title && <span className="wv-page__tour-title">{currentStop.title}</span>}
+              {currentStop.caption && (
+                <span className="wv-page__tour-caption">{currentStop.caption}</span>
+              )}
             </div>
           )}
 

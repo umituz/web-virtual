@@ -16,6 +16,7 @@ import type {
   PinDisplayMode,
   WorldTickFn,
   UnregisterTick,
+  WorldTourConfig,
 } from '../core/types'
 import { WorldEngine } from '../engine/renderer'
 import { createStylizedAvatar, type CreatedAvatar } from '../entities/people/AvatarBuilder'
@@ -32,6 +33,7 @@ export interface VirtualWorldRef {
   setNightMode: (isNight: boolean) => void
   resize: () => void
   registerTick: (fn: WorldTickFn) => UnregisterTick
+  setTour: (config: WorldTourConfig | null) => void
 }
 
 export interface VirtualWorldLabels {
@@ -71,6 +73,7 @@ export interface VirtualWorldProps {
   children?: ReactNode
   renderCustomInspectorContent?: (entity: WorldEntity) => ReactNode
   renderCustomInspectorActions?: (entity: WorldEntity) => ReactNode
+  onTourStopChange?: (stopIndex: number | null) => void
   labels?: LabelOverrides<VirtualWorldLabels>
   controlsLabels?: LabelOverrides<WorldControlsLabels>
   inspectorLabels?: LabelOverrides<EntityInspectorLabels>
@@ -96,6 +99,7 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       children,
       renderCustomInspectorContent,
       renderCustomInspectorActions,
+      onTourStopChange,
       labels,
       controlsLabels,
       inspectorLabels,
@@ -113,9 +117,11 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
 
     const worldRef = useRef(world)
     const nightModeRef = useRef(false)
+    const tourConfigRef = useRef<WorldTourConfig | null>(null)
     const callbacksRef = useRef({
       onSelectEntity: (_entity: WorldEntity | null) => {},
       onHoverEntity: (_entity: WorldEntity | null) => {},
+      onTourStopChange: (_stopIndex: number | null) => {},
     })
 
     const [internalNightMode, setInternalNightMode] = useState(false)
@@ -156,6 +162,7 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       callbacksRef.current = {
         onSelectEntity: handleSelectEntity,
         onHoverEntity: onHoverEntity || (() => {}),
+        onTourStopChange: onTourStopChange || (() => {}),
       }
     })
 
@@ -218,6 +225,11 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
       })
       staticInteractivesRef.current = staticInteractives
       engine.interactiveObjects = [...staticInteractives]
+
+      const pendingTour = tourConfigRef.current
+      if (pendingTour) {
+        engine.startTour(pendingTour, (index) => callbacksRef.current.onTourStopChange(index))
+      }
 
       const resizeObserver = new ResizeObserver((entries) => {
         for (const entry of entries) {
@@ -345,6 +357,17 @@ export const VirtualWorld = forwardRef<VirtualWorldRef, VirtualWorldProps>(
             return engineRef.current.registerTick(fn)
           }
           return () => {}
+        },
+        setTour: (config: WorldTourConfig | null) => {
+          tourConfigRef.current = config
+          const engine = engineRef.current
+          if (!engine) return
+          if (config) {
+            engine.startTour(config, (index) => callbacksRef.current.onTourStopChange(index))
+          } else {
+            engine.stopTour()
+            callbacksRef.current.onTourStopChange(null)
+          }
         },
       }),
       [],

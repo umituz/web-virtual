@@ -180,6 +180,21 @@ export interface WorldEffects {
   bloom?: boolean | BloomEffects
 }
 
+export interface WorldTourStop {
+  id: string
+  title?: string
+  caption?: string
+  position?: [number, number, number]
+  target?: [number, number, number]
+  holdSeconds?: number
+}
+
+export interface WorldTourConfig {
+  stops: WorldTourStop[]
+  autoRotateSpeed?: number
+  transitionSeconds?: number
+}
+
 export interface CreateEnvironmentOptions {
   preset?: WorldPreset
   id?: string
