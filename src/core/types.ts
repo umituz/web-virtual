@@ -124,6 +124,7 @@ export interface LightingConfiguration {
   nightSunColor?: string
   nightSunIntensity?: number
   shadows?: boolean
+  interiorSpots?: boolean
 }
 
 export interface WorldTheme {
@@ -164,8 +165,19 @@ export interface WorldDefinition {
   theme: WorldTheme
   zones: WorldZone[]
   entities: WorldEntity[]
+  effects?: WorldEffects
   capabilities?: WorldCapabilities
   metadata?: Record<string, unknown>
+}
+
+export interface BloomEffects {
+  strength?: number
+  radius?: number
+  threshold?: number
+}
+
+export interface WorldEffects {
+  bloom?: boolean | BloomEffects
 }
 
 export interface CreateEnvironmentOptions {
@@ -184,6 +196,7 @@ export interface CreateEnvironmentOptions {
   theme?: Partial<WorldTheme>
   zones?: WorldZone[]
   entities?: EntityDraft[]
+  effects?: WorldEffects
   metadata?: Record<string, unknown>
 }
 
@@ -232,6 +245,7 @@ export interface WorldPreset {
   slots?: WorldSlot[]
   /** Optional demo occupants — shipped presets deliberately leave this empty. */
   defaultEntities?: EntityDraft[]
+  effects?: WorldEffects
   buildScene?: (scene: import('three').Scene, options: BuildSceneOptions) => void
 }
 

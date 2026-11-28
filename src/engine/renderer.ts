@@ -1,4 +1,8 @@
 import * as THREE from 'three'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
 import type {
   WorldDefinition,
   WorldEntity,
@@ -43,6 +47,7 @@ export class WorldEngine {
   private visibilityHandler: (() => void) | null = null
   private clock = new THREE.Clock()
   private hoveredEntityId: string | null = null
+  private composer: EffectComposer | null = null
 
   constructor(private options: WorldEngineOptions) {
     const { canvas, world } = options
@@ -73,6 +78,24 @@ export class WorldEngine {
     this.raycaster = new WorldRaycaster()
     this.perfManager = new PerformanceManager()
     this.projector = new DirectDOMProjector()
+
+    const bloom = world.effects?.bloom
+    if (bloom) {
+      const cfg = bloom === true ? {} : bloom
+      const composer = new EffectComposer(this.renderer)
+      composer.addPass(new RenderPass(this.scene, this.cameraSystem.camera))
+      const size = this.renderer.getSize(new THREE.Vector2())
+      composer.addPass(
+        new UnrealBloomPass(
+          size,
+          cfg.strength ?? 0.55,
+          cfg.radius ?? 0.6,
+          cfg.threshold ?? 0.72,
+        ),
+      )
+      composer.addPass(new OutputPass())
+      this.composer = composer
+    }
 
     this.initEventListeners(canvas)
     this.initContextLossHandling(canvas)
@@ -200,6 +223,7 @@ export class WorldEngine {
     if (this.isDisposed || width <= 0 || height <= 0) return
     this.cameraSystem.updateAspect(width / height)
     this.renderer.setSize(width, height)
+    this.composer?.setSize(width, height)
   }
 
   public setNightMode(isNight: boolean): void {
@@ -261,7 +285,11 @@ export class WorldEngine {
       }
 
       // Render Three.js scene
-      this.renderer.render(this.scene, this.cameraSystem.camera)
+      if (this.composer) {
+        this.composer.render(delta)
+      } else {
+        this.renderer.render(this.scene, this.cameraSystem.camera)
+      }
 
       // Direct GPU CSS translate3d projection for 60fps labels without React re-render
       if (this.options.pinElements && this.options.pinElements.size > 0) {
@@ -321,6 +349,7 @@ export class WorldEngine {
     })
     this.scene.clear()
 
+    this.composer?.dispose()
     this.renderer.dispose()
   }
 }

@@ -43,6 +43,38 @@ Entities without an explicit `position` are auto-placed onto preset slots — by
 - **Day & Night Simulation**: One-click smooth lighting transitions.
 - **Pin & Label Modes**: Minimal circular pins (`#1`..`#17`) with status indicators, expandable chips, or hidden mode.
 
+## Vertical Farm / CEA Laboratory (2.7.0)
+
+Closed-environment cultivation, fully config-driven — the same architecture-only
+contract as every other preset:
+
+| Builder | What it makes |
+| --- | --- |
+| `createLabShell({ width, depth, height, panels })` | Clean-room shell — floor grid, walls, emissive ceiling panels, observation window |
+| `createGrowRack({ tiers, trays: { growth }, led })` | Multi-tier rack — frame, tray slabs, instanced plants (growth 0→1) and one LED bar per tier |
+| `createLedBar({ spectrum, periodSeconds })` | Emissive LED bar — `vegetative` / `flowering` / `full` spectra with a breathing photoperiod cycle |
+| `createVerticalTower({ mist })` | Pocketed fog tower with instanced canopies and drifting mist |
+| `createFishTank({ fishCount })` | Aquaponic tank — glass, water volume, schooling fish on looping swim paths |
+| `createHydroLoop({ points })` | Closed pipe loop with glowing flow dashes streaming along the curve |
+| `createClimateUnit({ fanSpeed })` | HVAC body, spinning fan and a soft airflow cone |
+| `createWorkbench({ trays, console })` | Propagation bench, seedling trays and a status console |
+
+Scene richness is engine-level: `effects: { bloom: { strength, radius, threshold } }`
+on the world or preset switches the renderer to an `EffectComposer` pipeline
+(UnrealBloom + OutputPass — LED bars and flow dashes actually glow); the loop is
+still the same battery-aware engine tick. Also new: `createPhotoperiod()`
+(on/off/fade cycle math), `createMistField()` (drifting particle volumes for
+fog, humidity or CO₂), `createCameraTour()` (OrbitControls auto-orbit handle),
+and `lighting.interiorSpots: false` turns the default office downlights off so
+labs light themselves from their own fixtures.
+
+`verticalLabPreset` composes all of it — two rack rows, a fog-tower aisle, the
+aquaponic tank with its hydro loop, ceiling climate units and a propagation
+bench (`VERTICAL_LAB_SLOTS` for occupant anchors). Bloom is on by default
+there; pass `effects: { bloom: false }` to opt out.
+
+---
+
 ---
 
 ## Installation

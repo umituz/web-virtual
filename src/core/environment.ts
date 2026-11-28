@@ -171,6 +171,7 @@ export function createEnvironment(options: CreateEnvironmentOptions): WorldDefin
     theme,
     zones,
     entities,
+    effects: options.effects ?? preset?.effects,
     metadata: options.metadata || {},
   }
 

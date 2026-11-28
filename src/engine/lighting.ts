@@ -47,16 +47,21 @@ export class WorldLighting {
 
     // Warm Architectural Interior Downlights
     this.execSpot = new THREE.SpotLight(0xfef3c7, 0.55, 18, Math.PI / 4, 0.5, 1.2)
-    this.execSpot.position.set(11, 7.5, -5.5)
-    this.execSpot.target.position.set(11, 0, -5.5)
-    this.scene.add(this.execSpot)
-    this.scene.add(this.execSpot.target)
-
     this.confSpot = new THREE.SpotLight(0xfef3c7, 0.55, 18, Math.PI / 3.5, 0.5, 1.2)
-    this.confSpot.position.set(11, 7.5, 2.5)
-    this.confSpot.target.position.set(11, 0, 2.5)
-    this.scene.add(this.confSpot)
-    this.scene.add(this.confSpot.target)
+    if (config.interiorSpots === false) {
+      this.execSpot.intensity = 0
+      this.confSpot.intensity = 0
+    } else {
+      this.execSpot.position.set(11, 7.5, -5.5)
+      this.execSpot.target.position.set(11, 0, -5.5)
+      this.scene.add(this.execSpot)
+      this.scene.add(this.execSpot.target)
+
+      this.confSpot.position.set(11, 7.5, 2.5)
+      this.confSpot.target.position.set(11, 0, 2.5)
+      this.scene.add(this.confSpot)
+      this.scene.add(this.confSpot.target)
+    }
 
     this.nightLight = new THREE.DirectionalLight(
       new THREE.Color(config.nightSunColor || '#38bdf8'),
@@ -67,6 +72,7 @@ export class WorldLighting {
   }
 
   setNightMode(isNight: boolean): void {
+    const spotsOn = this.config.interiorSpots !== false
     if (isNight) {
       this.ambientLight.intensity = this.config.nightAmbientIntensity ?? 0.3
       this.ambientLight.color.set(this.config.nightAmbientColor || '#1e293b')
@@ -75,8 +81,8 @@ export class WorldLighting {
       this.fillLight.intensity = 0.1
       this.nightLight.intensity = this.config.nightSunIntensity ?? 0.6
       this.hemisphereLight.intensity = 0.15
-      this.execSpot.intensity = 0.8
-      this.confSpot.intensity = 0.8
+      this.execSpot.intensity = spotsOn ? 0.8 : 0
+      this.confSpot.intensity = spotsOn ? 0.8 : 0
     } else {
       this.ambientLight.intensity = this.config.ambientIntensity ?? 0.82
       this.ambientLight.color.set(this.config.ambientColor || '#ffffff')
@@ -85,8 +91,8 @@ export class WorldLighting {
       this.fillLight.intensity = 0.38
       this.nightLight.intensity = 0
       this.hemisphereLight.intensity = 0.45
-      this.execSpot.intensity = 0.55
-      this.confSpot.intensity = 0.55
+      this.execSpot.intensity = spotsOn ? 0.55 : 0
+      this.confSpot.intensity = spotsOn ? 0.55 : 0
     }
   }
 
